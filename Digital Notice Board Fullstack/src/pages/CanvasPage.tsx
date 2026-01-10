@@ -6,11 +6,13 @@ import { NewNoticeModal } from '../components/NewNoticeModal';
 import { usePins } from '../hooks/usePins';
 import { useConnections } from '../hooks/useConnections';
 import { useStore } from '../store/useStore';
+import { usePresence } from '../hooks/usePresence';
 
 export const CanvasPage = () => {
   const { currentClusterId, setActivePin } = useStore();
   const { pins, updatePinPosition, addPin, loading } = usePins();
   const { connections, addConnection } = useConnections();
+  const { othersCursors, updateMyCursor } = usePresence();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Connection linking state
@@ -61,7 +63,10 @@ export const CanvasPage = () => {
 
   return (
     <div className="w-full h-full relative" onClick={() => setConnectingPinId(null)}>
-      <InfiniteCanvas>
+      <InfiniteCanvas 
+        cursors={othersCursors} 
+        onCursorMove={updateMyCursor}
+      >
         {/* Connections Layer (Below Pins) */}
         <svg className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-visible z-0">
            {connections.map(conn => {
@@ -93,7 +98,7 @@ export const CanvasPage = () => {
                 e.stopPropagation();
                 handlePinClick(pin.id, e);
             }}
-            className={`${connectingPinId === pin.id ? 'ring-4 ring-blue-500 rounded-xl' : ''} transition-all duration-200`}
+            className={`${connectingPinId === pin.id ? 'ring-4 ring-blue-500 rounded-xl' : ''} transition-all duration-200 pointer-events-auto`}
           >
             <PaperNote 
               pin={pin} 

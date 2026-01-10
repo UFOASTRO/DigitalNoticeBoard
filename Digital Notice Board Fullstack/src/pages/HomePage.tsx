@@ -56,38 +56,48 @@ export const HomePage = () => {
 
   const handleEnter = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (clusterName.trim() && user) {
-       // Ideally we check if it exists or create it, but for now navigate.
-       // The RLS will block creation if we just try to insert without being logged in.
-       // We'll navigate to the UUID if we knew it, but here we are typing a name?
-       // The prompt schema uses UUIDs for clusters.
-       // Typing "engineering-team" won't work if the ID is a UUID.
-       // Let's assume for this step we Create a new cluster if it doesn't exist?
-       // Or we need a list of My Clusters.
-       
-       // For MVP alignment with the schema (where ID is UUID):
-       // We should probably CREATE a cluster here and redirect to its ID.
-       
-       const { data, error } = await supabase
-         .from('clusters')
-         .insert({
-           name: clusterName,
-           owner_id: user.id
-         })
-         .select()
-         .single();
-         
-       if (error) {
-         console.error(error);
-         alert('Error creating cluster (or maybe you just want to join by ID?): ' + error.message);
-         // If it failed, maybe they meant to join an existing ID?
-         // Let's try navigating directly if it looks like a UUID
-         if (clusterName.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-            navigate(`/app/${clusterName}`);
-         }
-       } else if (data) {
-         navigate(`/app/${data.id}`);
-       }
+    if (!clusterName.trim() || !user) return;
+
+    const inputName = clusterName.trim();
+    // Check if input looks like a UUID
+    const isUUID = inputName.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+
+    if (isUUID) {
+      // Attempt to join via RPC
+      const { data, error } = await supabase.rpc('join_cluster', { target_cluster_id: inputName });
+      
+      if (error) {
+        console.error('Join error:', error);
+        if (error.code === '42883') { // undefined_function
+             alert('Join function missing. Please run the enable_join.sql script in Supabase.');
+        } else {
+             alert('Could not join cluster: ' + error.message);
+        }
+      } else {
+        if (data === 'joined') {
+           alert('Successfully joined the board!');
+        } else if (data === 'already_member') {
+           console.log('Already a member, navigating...');
+        }
+        navigate(`/app/${inputName}`);
+      }
+    } else {
+      // Create new cluster
+      const { data, error } = await supabase
+        .from('clusters')
+        .insert({
+          name: inputName,
+          owner_id: user.id
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        console.error(error);
+        alert('Error creating cluster: ' + error.message);
+      } else if (data) {
+        navigate(`/app/${data.id}`);
+      }
     }
   };
   

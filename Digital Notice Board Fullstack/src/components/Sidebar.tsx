@@ -109,21 +109,9 @@ export const Sidebar = () => {
   return (
     <div className="flex flex-col h-full bg-yellow-50/30">
       <div className="p-4 border-b border-yellow-100 flex items-center justify-between bg-yellow-50/80 backdrop-blur-sm">
-        <div className="flex items-center gap-2 text-yellow-900 font-semibold">
-          <StickyNote size={20} />
-          <span>Pin Thread</span>
-        </div>
         <button onClick={handleClose} className="p-1 hover:bg-yellow-100/50 rounded text-yellow-700 transition-colors">
           <X size={16} />
         </button>
-      </div>
-      
-      {/* Pin Context Info - Could be expanded */}
-      <div className="px-4 py-3 bg-white border-b border-slate-100">
-         <div className="text-[10px] font-mono text-slate-400 mb-1">ID: {activePinId.slice(0,8)}...</div>
-         <p className="text-xs text-slate-500 italic">
-            Discussing this specific note.
-         </p>
       </div>
 
       <MessageList pinId={activePinId} />

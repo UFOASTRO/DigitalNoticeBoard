@@ -1,8 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Cursor as CursorType } from '../hooks/usePresence';
+import { MousePointer2 } from 'lucide-react';
 
 interface InfiniteCanvasProps {
   children?: React.ReactNode;
+  cursors?: CursorType[];
+  onCursorMove?: (x: number, y: number) => void;
 }
 
 interface Position {
@@ -10,7 +14,7 @@ interface Position {
   y: number;
 }
 
-export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ children }) => {
+export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ children, cursors = [], onCursorMove }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Canvas State
@@ -40,6 +44,16 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ children }) => {
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    // Broadcast cursor position (transformed to canvas space)
+    if (onCursorMove) {
+       // Canvas space = (Screen - Offset) / Scale
+       // We use e.clientX/Y relative to the container if possible, but clientX is global.
+       // Ideally we subtract the container's top/left, but if full screen it's 0.
+       const canvasX = (e.clientX - offset.x) / scale;
+       const canvasY = (e.clientY - offset.y) / scale;
+       onCursorMove(canvasX, canvasY);
+    }
+
     if (!isDragging) return;
     
     // Calculate delta
@@ -117,21 +131,51 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ children }) => {
       data-canvas-bg="true"
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
-      {/* The Infinite Grid Layer */}
+      {/* The Infinite Grid Layer - now separate from content transform */}
+      <div 
+        className="absolute inset-0 w-full h-full dot-grid-bg pointer-events-none"
+        style={{
+            backgroundPosition: `${offset.x}px ${offset.y}px`,
+            backgroundSize: `${24 * scale}px ${24 * scale}px`
+        }}
+      />
+
+      {/* Content Container - Transformed */}
       <motion.div
-        className="absolute inset-0 w-full h-full origin-top-left dot-grid-bg"
-        data-canvas-bg="true"
+        className="absolute inset-0 w-full h-full origin-top-left pointer-events-none"
         style={{
           x: offset.x,
           y: offset.y,
           scale: scale,
-          width: '100%', 
-          height: '100%',
         }}
       >
-        {/* Content Container */}
-        <div className="relative w-full h-full" data-canvas-bg="true">
+        <div className="relative w-full h-full">
             {children}
+            
+            {/* Live Cursors Layer */}
+            {cursors.map(cursor => (
+              <div
+                key={cursor.userId}
+                className="absolute top-0 left-0 flex flex-col items-start pointer-events-none z-50 transition-all duration-75 ease-linear"
+                style={{
+                  transform: `translate(${cursor.x}px, ${cursor.y}px) scale(${1/scale})`,
+                  transformOrigin: 'top left',
+                }}
+              >
+                <MousePointer2 
+                  size={20} 
+                  fill={cursor.color} 
+                  color={cursor.color}
+                  className="drop-shadow-sm"
+                />
+                <span 
+                  className="ml-4 px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm whitespace-nowrap"
+                  style={{ backgroundColor: cursor.color }}
+                >
+                  {cursor.name}
+                </span>
+              </div>
+            ))}
         </div>
       </motion.div>
 
@@ -140,7 +184,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ children }) => {
         <div className="bg-white/90 backdrop-blur shadow-sm p-2 rounded-lg text-xs text-slate-500 font-mono pointer-events-auto border border-slate-200">
            Zoom: {Math.round(scale * 100)}%
         </div>
-        <div className="bg-white/90 backdrop-blur shadow-sm p-2 rounded-lg text-xs text-slate-500 font-mono pointer-events-auto border border-slate-200">
+        <div className="bg-stone-700  backdrop-blur shadow-sm p-2 rounded-lg text-xs text-slate-500 font-mono pointer-events-auto border border-slate-200">
            X: {Math.round(offset.x)} Y: {Math.round(offset.y)}
         </div>
       </div>

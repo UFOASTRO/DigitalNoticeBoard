@@ -15,6 +15,9 @@ export interface Cluster {
   name: string;
   owner_id: string;
   created_at: string;
+  description?: string;
+  is_public?: boolean;
+  is_locked?: boolean;
 }
 
 export interface ClusterMember {
@@ -22,6 +25,18 @@ export interface ClusterMember {
   user_id: string;
   role: Role;
   joined_at: string;
+}
+
+export interface ClusterInvite {
+  id: string;
+  cluster_id: string;
+  token: string;
+  permission_level: 'editor' | 'viewer';
+  created_by: string;
+  created_at: string;
+  expires_at: string;
+  max_uses?: number;
+  uses_count: number;
 }
 
 export interface PinContent {

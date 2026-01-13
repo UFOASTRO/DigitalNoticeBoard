@@ -38,8 +38,11 @@ export const usePresence = () => {
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string } | null>(null);
   
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const cursorsRef = useRef<Map<string, Cursor>>(new Map());
   const lastBroadcastRef = useRef<number>(0);
-  const THROTTLE_MS = 20; // Broadcast at most every 20ms (50fps)
+  
+  // Increase update rate for smoother feel (60fps target approx 16ms)
+  const THROTTLE_MS = 16; 
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -64,38 +67,78 @@ export const usePresence = () => {
     });
 
     channel
+      // 1. Handle Presence (Who is here)
       .on('presence', { event: 'sync' }, () => {
         const newState = channel.presenceState();
-        const cursors: Cursor[] = [];
+        const activeIds = new Set(Object.keys(newState));
         
-        Object.keys(newState).forEach(key => {
-          if (key === currentUser.id) return; // Skip self
+        // Remove cursors of users who left
+        const currentMap = cursorsRef.current;
+        for (const [userId] of currentMap) {
+            if (!activeIds.has(userId) && userId !== currentUser.id) {
+                currentMap.delete(userId);
+            }
+        }
 
-          const presences = newState[key] as any[];
-          if (presences && presences.length > 0) {
-            // Get the latest presence state for this user
-            const latest = presences[presences.length - 1];
-            if (latest.x !== undefined && latest.y !== undefined) {
-              cursors.push({
+        // Initialize cursors for new users (if not exists)
+        Object.keys(newState).forEach(key => {
+          if (key === currentUser.id) return;
+          if (!currentMap.has(key)) {
+             const presences = newState[key] as any[];
+             const info = presences[0]; // Get static info
+             currentMap.set(key, {
                 userId: key,
-                x: latest.x,
-                y: latest.y,
-                name: latest.name || 'User',
+                x: 0, // Default until we get a broadcast
+                y: 0,
+                name: info?.name || 'User',
                 color: getColorForUser(key),
                 lastUpdated: Date.now()
-              });
-            }
+             });
           }
         });
-        
-        setOthersCursors(cursors);
+
+        // Update state
+        setOthersCursors(Array.from(currentMap.values()));
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+          // Optional: Handle immediate join logic if needed
+      })
+      .on('presence', { event: 'leave' }, ({ key }) => {
+           if (cursorsRef.current.has(key)) {
+               cursorsRef.current.delete(key);
+               setOthersCursors(Array.from(cursorsRef.current.values()));
+           }
+      })
+      // 2. Handle Broadcast (Where are they - High Frequency)
+      .on('broadcast', { event: 'cursor-move' }, ({ payload }) => {
+          if (payload.userId === currentUser.id) return;
+
+          const current = cursorsRef.current.get(payload.userId);
+          if (current) {
+             // Update position
+             current.x = payload.x;
+             current.y = payload.y;
+             current.lastUpdated = Date.now();
+             // Force update
+             setOthersCursors(Array.from(cursorsRef.current.values()));
+          } else {
+             // Received move from unknown user (race condition with presence), add them temporarily
+             cursorsRef.current.set(payload.userId, {
+                userId: payload.userId,
+                x: payload.x,
+                y: payload.y,
+                name: payload.name || 'Unknown',
+                color: getColorForUser(payload.userId),
+                lastUpdated: Date.now()
+             });
+             setOthersCursors(Array.from(cursorsRef.current.values()));
+          }
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // Initial track
            await channel.track({
             online_at: new Date().toISOString(),
-            name: currentUser.email.split('@')[0], // Simple name
+            name: currentUser.email.split('@')[0],
           });
         }
       });
@@ -115,11 +158,16 @@ export const usePresence = () => {
 
     lastBroadcastRef.current = now;
 
-    channelRef.current.track({
-      x,
-      y,
-      name: currentUser.email.split('@')[0],
-      updated_at: now
+    // Send ephemeral message
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'cursor-move',
+      payload: {
+        userId: currentUser.id,
+        x,
+        y,
+        name: currentUser.email.split('@')[0]
+      }
     });
   }, [currentUser]);
 

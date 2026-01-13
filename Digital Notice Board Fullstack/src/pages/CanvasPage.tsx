@@ -72,14 +72,20 @@ export const CanvasPage = () => {
            {connections.map(conn => {
               const start = getPinCenter(conn.from_pin);
               const end = getPinCenter(conn.to_pin);
+              const dx = end.x - start.x;
+              const dy = end.y - start.y;
+              // Create a smooth S-curve
+              const pathData = `M ${start.x} ${start.y} C ${start.x + dx * 0.5} ${start.y}, ${end.x - dx * 0.5} ${end.y}, ${end.x} ${end.y}`;
+
               return (
-                 <line 
+                 <path 
                    key={conn.id}
-                   x1={start.x} y1={start.y}
-                   x2={end.x} y2={end.y}
+                   d={pathData}
+                   fill="none"
                    stroke="#94a3b8"
-                   strokeWidth="2"
-                   strokeDasharray="5,5"
+                   strokeWidth="3"
+                   strokeLinecap="round"
+                   className="opacity-60 hover:opacity-100 transition-opacity duration-200"
                  />
               );
            })}

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { useCluster } from '../hooks/useCluster';
 import { useMessages } from '../hooks/useMessages';
-import { X, MessageSquare, StickyNote, Trash2, Send } from 'lucide-react';
+import { X, MessageSquare, StickyNote, Trash2, Send, Share2, LayoutGrid } from 'lucide-react';
+import { InviteModal } from './InviteModal';
 
 const MessageList = ({ pinId }: { pinId: string | null }) => {
   const { messages, loading, sendMessage, scrollRef } = useMessages(pinId);
@@ -69,8 +71,10 @@ const MessageList = ({ pinId }: { pinId: string | null }) => {
 };
 
 export const Sidebar = () => {
+  const navigate = useNavigate();
   const { activePinId, setActivePin, toggleSidebar } = useStore();
   const { isOwner, deleteCluster, cluster } = useCluster();
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const handleClose = () => {
     setActivePin(null);
@@ -78,11 +82,17 @@ export const Sidebar = () => {
 
   if (!activePinId) {
     return (
-      <div className="flex flex-col h-full bg-slate-50/50">
+      <div className="flex flex-col h-full bg-slate-50/50 relative">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white">
-          <div className="flex items-center gap-2 text-slate-700 font-semibold">
-            <MessageSquare size={20} />
-            <span className="truncate max-w-[150px]">{cluster?.name || 'General Chat'}</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate('/dashboard')} className="p-1 hover:bg-slate-100 rounded text-slate-600 transition-colors" title="Back to Dashboard">
+                <LayoutGrid size={20} />
+            </button>
+            <div className="h-4 w-[1px] bg-slate-200 mx-1"></div>
+            <div className="flex items-center gap-2 text-slate-700 font-semibold">
+                <MessageSquare size={20} />
+                <span className="truncate max-w-[150px]">{cluster?.name || 'General Chat'}</span>
+            </div>
           </div>
           <button onClick={toggleSidebar} className="p-1 hover:bg-slate-100 rounded text-slate-400 transition-colors">
             <X size={16} />
@@ -90,15 +100,27 @@ export const Sidebar = () => {
         </div>
         
         {isOwner && (
-            <div className="px-4 py-2 bg-red-50/50 border-b border-red-100 flex justify-end">
+            <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+              <button 
+                onClick={() => setShowInviteModal(true)}
+                className="text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1 font-medium px-2 py-1 hover:bg-slate-200 rounded transition-colors"
+              >
+                <Share2 size={12} />
+                Share Board
+              </button>
+
               <button 
                 onClick={deleteCluster}
-                className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1 font-medium"
+                className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1 font-medium px-2 py-1 hover:bg-red-100 rounded transition-colors"
               >
                 <Trash2 size={12} />
-                Delete Board
+                Delete
               </button>
             </div>
+        )}
+
+        {showInviteModal && cluster && (
+            <InviteModal cluster={cluster} onClose={() => setShowInviteModal(false)} />
         )}
 
         <MessageList pinId={null} />

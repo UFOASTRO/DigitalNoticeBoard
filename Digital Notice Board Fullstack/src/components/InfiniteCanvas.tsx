@@ -156,7 +156,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ children, cursor
             {cursors.map(cursor => (
               <div
                 key={cursor.userId}
-                className="absolute top-0 left-0 flex flex-col items-start pointer-events-none z-50 transition-all duration-75 ease-linear"
+                className="absolute top-0 left-0 flex flex-col items-start pointer-events-none z-50 transition-transform duration-100 ease-out will-change-transform"
                 style={{
                   transform: `translate(${cursor.x}px, ${cursor.y}px) scale(${1/scale})`,
                   transformOrigin: 'top left',

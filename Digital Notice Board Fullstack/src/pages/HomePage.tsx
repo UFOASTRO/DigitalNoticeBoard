@@ -1,10 +1,11 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
 
 export const HomePage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [clusterName, setClusterName] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,14 +21,22 @@ export const HomePage = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user) {
+        const returnTo = searchParams.get('returnTo');
+        navigate(returnTo || '/dashboard');
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        const returnTo = searchParams.get('returnTo');
+        navigate(returnTo || '/dashboard');
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate, searchParams]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,50 +63,27 @@ export const HomePage = () => {
     setLoading(false);
   };
 
-  const handleEnter = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clusterName.trim() || !user) return;
 
     const inputName = clusterName.trim();
-    // Check if input looks like a UUID
-    const isUUID = inputName.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
-
-    if (isUUID) {
-      // Attempt to join via RPC
-      const { data, error } = await supabase.rpc('join_cluster', { target_cluster_id: inputName });
+    
+    // Create new cluster
+    const { data, error } = await supabase
+      .from('clusters')
+      .insert({
+        name: inputName,
+        owner_id: user.id
+      })
+      .select()
+      .single();
       
-      if (error) {
-        console.error('Join error:', error);
-        if (error.code === '42883') { // undefined_function
-             alert('Join function missing. Please run the enable_join.sql script in Supabase.');
-        } else {
-             alert('Could not join cluster: ' + error.message);
-        }
-      } else {
-        if (data === 'joined') {
-           alert('Successfully joined the board!');
-        } else if (data === 'already_member') {
-           console.log('Already a member, navigating...');
-        }
-        navigate(`/app/${inputName}`);
-      }
-    } else {
-      // Create new cluster
-      const { data, error } = await supabase
-        .from('clusters')
-        .insert({
-          name: inputName,
-          owner_id: user.id
-        })
-        .select()
-        .single();
-        
-      if (error) {
-        console.error(error);
-        alert('Error creating cluster: ' + error.message);
-      } else if (data) {
-        navigate(`/app/${data.id}`);
-      }
+    if (error) {
+      console.error(error);
+      alert('Error creating cluster: ' + error.message);
+    } else if (data) {
+      navigate(`/app/${data.id}`);
     }
   };
   
@@ -162,9 +148,9 @@ export const HomePage = () => {
                <button onClick={handleLogout} className="text-sm text-red-500 hover:underline">Logout</button>
             </div>
 
-            <form onSubmit={handleEnter} className="space-y-4">
+            <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Create New Cluster Name or Enter ID</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Create New Board</label>
                 <input 
                   type="text" 
                   value={clusterName}
@@ -177,13 +163,9 @@ export const HomePage = () => {
                 type="submit"
                 className="w-full bg-slate-900 text-white font-semibold py-3 rounded-lg hover:bg-slate-800 transition-all active:scale-95"
               >
-                Create / Join
+                Create Board
               </button>
             </form>
-            
-            <div className="mt-6 pt-6 border-t border-slate-100">
-               <p className="text-xs text-slate-400 mb-2">Note: To join an existing board, paste its UUID.</p>
-            </div>
           </>
         )}
       </div>

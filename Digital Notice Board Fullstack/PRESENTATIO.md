@@ -14,5 +14,3 @@ see the number of users and accounts on the cluster (with active states --  an a
 
 The connector between notes should be more flexible and adapt in real time to movements of the notes 
 also it should not be static 
-
-

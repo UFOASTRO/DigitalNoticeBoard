@@ -14,3 +14,12 @@ see the number of users and accounts on the cluster (with active states --  an a
 
 The connector between notes should be more flexible and adapt in real time to movements of the notes 
 also it should not be static 
+
+Users shoudld be able to mark as read
+Include Upload images to the chat section
+revamp the chat section to look better
+Integrate Google Calender API to add directly to schedule
+can you include labels in the UI based on the category of stick note selcted (work, Idea, etc)
+People who created the note should be able to edit it (edited should show as a label icon)
+
+iMPLEMENT Dark mode

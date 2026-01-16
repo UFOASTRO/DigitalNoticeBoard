@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Pin } from '../types';
+import type { Pin } from '../types';
 
 export interface RecentUpdate extends Pin {
   cluster_name?: string;

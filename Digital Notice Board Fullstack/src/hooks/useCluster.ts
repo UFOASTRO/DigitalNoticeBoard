@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
-import { Cluster } from '../types';
+import type { Cluster } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 export const useCluster = () => {

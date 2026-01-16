@@ -1,41 +1,63 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { InfiniteCanvas } from '../components/InfiniteCanvas';
 import { PaperNote } from '../components/PaperNote';
 import { NewNoticeModal } from '../components/NewNoticeModal';
+import { FloatingDock } from '../components/FloatingDock';
 import { usePins } from '../hooks/usePins';
 import { useConnections } from '../hooks/useConnections';
 import { useStore } from '../store/useStore';
 import { usePresence } from '../hooks/usePresence';
 
 export const CanvasPage = () => {
-  const { currentClusterId, setActivePin } = useStore();
-  const { pins, updatePinPosition, addPin, loading } = usePins();
+  const navigate = useNavigate();
+  const { setActivePin } = useStore();
+  const { pins, updatePinPosition, addPin, updatePinContent, markPinAsRead, loading } = usePins();
   const { connections, addConnection } = useConnections();
-  const { othersCursors, updateMyCursor } = usePresence();
+  const { othersCursors, updateMyCursor, currentUser } = usePresence();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPin, setEditingPin] = useState<any | null>(null);
   
   // Connection linking state
   const [connectingPinId, setConnectingPinId] = useState<string | null>(null);
+  const [isConnectMode, setIsConnectMode] = useState(false);
 
   const handleSaveNotice = (data: any) => {
-    addPin({
-      type: 'sticky',
-      content: {
-        title: data.title,
-        body: data.content,
-        paperType: 'plain',
-        paperColor: data.paperColor,
-        pinColor: data.pinColor,
-      },
-      x: window.innerWidth / 2 - 150,
-      y: window.innerHeight / 2 - 100
-    });
+    const pinContent = {
+      title: data.title,
+      body: data.content,
+      category: data.category,
+      paperType: 'plain' as const,
+      paperColor: data.paperColor,
+      pinColor: data.pinColor,
+    };
+
+    if (editingPin) {
+        updatePinContent(editingPin.id, pinContent);
+        setEditingPin(null);
+    } else {
+        addPin({
+          type: 'sticky',
+          content: pinContent,
+          x: window.innerWidth / 2 - 150,
+          y: window.innerHeight / 2 - 100
+        });
+    }
+  };
+
+  const handleEditPin = (pin: any) => {
+     setEditingPin(pin);
+     setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+      setIsModalOpen(false);
+      setEditingPin(null);
   };
 
   const handlePinClick = (pinId: string, e: React.MouseEvent) => {
-    // If holding Shift, try to connect
-    if (e.shiftKey) {
+    // If holding Shift OR in connect mode, try to connect
+    if (e.shiftKey || isConnectMode) {
        e.stopPropagation();
        if (connectingPinId === null) {
           setConnectingPinId(pinId);
@@ -44,6 +66,8 @@ export const CanvasPage = () => {
              addConnection(connectingPinId, pinId);
           }
           setConnectingPinId(null);
+          // If in connect mode, maybe we want to keep selecting? 
+          // For now let's reset connectingId but keep mode.
        }
        return;
     }
@@ -73,7 +97,6 @@ export const CanvasPage = () => {
               const start = getPinCenter(conn.from_pin);
               const end = getPinCenter(conn.to_pin);
               const dx = end.x - start.x;
-              const dy = end.y - start.y;
               // Create a smooth S-curve
               const pathData = `M ${start.x} ${start.y} C ${start.x + dx * 0.5} ${start.y}, ${end.x - dx * 0.5} ${end.y}, ${end.x} ${end.y}`;
 
@@ -109,6 +132,9 @@ export const CanvasPage = () => {
             <PaperNote 
               pin={pin} 
               onDragEnd={updatePinPosition}
+              onEdit={handleEditPin}
+              onMarkRead={markPinAsRead}
+              currentUserId={currentUser?.id}
             />
           </div>
         ))}
@@ -121,28 +147,27 @@ export const CanvasPage = () => {
         )}
       </InfiniteCanvas>
 
-      {/* Floating Action Button */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-slate-900 hover:bg-slate-800 text-white p-4 rounded-full shadow-xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 group"
-        >
-          <Plus size={24} />
-          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap text-sm font-medium">
-            Add Note
-          </span>
-        </button>
-      </div>
+      {/* Floating Menu Dock */}
+      <FloatingDock 
+        onAddNote={() => { setEditingPin(null); setIsModalOpen(true); }}
+        isConnectMode={isConnectMode}
+        onToggleConnect={() => {
+           setIsConnectMode(!isConnectMode);
+           setConnectingPinId(null); // Reset pending connection when toggling
+        }}
+        onDashboard={() => navigate('/dashboard')}
+      />
       
-      {/* Help Tip */}
-      <div className="fixed bottom-8 right-8 text-xs text-slate-400 bg-white/80 backdrop-blur px-3 py-1 rounded-full shadow-sm border border-slate-100 hidden md:block">
-         Shift + Click two notes to connect them
+      {/* Help Tip - Context Aware */}
+      <div className="fixed bottom-8 right-8 text-xs text-slate-400 bg-white/80 backdrop-blur px-3 py-1 rounded-full shadow-sm border border-slate-100 hidden md:block transition-all">
+         {isConnectMode ? 'Tap two notes to connect them' : 'Shift + Click two notes to connect them'}
       </div>
 
       <NewNoticeModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleModalClose}
         onSave={handleSaveNotice}
+        initialData={editingPin?.content}
       />
     </div>
   );

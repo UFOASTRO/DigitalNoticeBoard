@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Message } from '../types';
+import type { Message } from '../types';
 import { useStore } from '../store/useStore';
 
 export const useMessages = (pinId: string | null) => {
@@ -88,8 +88,8 @@ export const useMessages = (pinId: string | null) => {
     }
   };
 
-  const sendMessage = async (content: string) => {
-    if (!content.trim() || !currentClusterId) return;
+  const sendMessage = async (content: string, imageUrl?: string) => {
+    if ((!content.trim() && !imageUrl) || !currentClusterId) return;
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -98,7 +98,8 @@ export const useMessages = (pinId: string | null) => {
       cluster_id: currentClusterId,
       user_id: user.id,
       pin_id: pinId, // null for general, uuid for thread
-      content: content.trim()
+      content: content.trim(),
+      image_url: imageUrl
     });
 
     if (error) {

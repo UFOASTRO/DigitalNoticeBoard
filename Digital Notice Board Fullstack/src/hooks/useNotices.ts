@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Notice, Coordinates } from '../types';
+import type { Notice, Coordinates } from '../types';
 
 export const useNotices = () => {
   const [notices, setNotices] = useState<Notice[]>([]);

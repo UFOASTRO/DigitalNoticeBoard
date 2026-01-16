@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Connection } from '../types';
+import type { Connection } from '../types';
 import { useStore } from '../store/useStore';
 
 export const useConnections = () => {

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Cursor as CursorType } from '../hooks/usePresence';
+import type { Cursor as CursorType } from '../hooks/usePresence';
 import { MousePointer2 } from 'lucide-react';
 
 interface InfiniteCanvasProps {
@@ -27,7 +27,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ children, cursor
   const lastDist = useRef<number | null>(null); // For pinch zoom
 
   // Constants
-  const MIN_SCALE = 0.1;
+  const MIN_SCALE = 0.5;
   const MAX_SCALE = 5;
 
   const handlePointerDown = (e: React.PointerEvent) => {

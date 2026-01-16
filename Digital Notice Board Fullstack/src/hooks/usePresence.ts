@@ -100,7 +100,7 @@ export const usePresence = () => {
         // Update state
         setOthersCursors(Array.from(currentMap.values()));
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+      .on('presence', { event: 'join' }, () => {
           // Optional: Handle immediate join logic if needed
       })
       .on('presence', { event: 'leave' }, ({ key }) => {

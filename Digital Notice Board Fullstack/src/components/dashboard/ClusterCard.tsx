@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Lock, Globe, ArrowRight } from 'lucide-react';
-import { UserCluster } from '../../hooks/useUserClusters';
+import type { UserCluster } from '../../hooks/useUserClusters';
 
 interface ClusterCardProps {
   cluster: UserCluster;
@@ -10,7 +10,7 @@ interface ClusterCardProps {
 
 export const ClusterCard: React.FC<ClusterCardProps> = ({ cluster, onManage }) => {
   const navigate = useNavigate();
-  const isAdmin = cluster.role === 'admin' || cluster.role === 'owner'; // 'owner' might not be a role type but handled via owner_id check usually, but let's assume 'admin' covers it or check owner_id if available. 
+  const isAdmin = cluster.role === 'admin'; 
   // In types.ts role is 'admin' | 'viewer' | 'editor'. Owner usually gets 'admin'.
 
   return (

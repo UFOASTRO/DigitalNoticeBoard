@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
+import { Loader2, Mail, Lock, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 
 export const AuthPage = () => {
   const navigate = useNavigate();

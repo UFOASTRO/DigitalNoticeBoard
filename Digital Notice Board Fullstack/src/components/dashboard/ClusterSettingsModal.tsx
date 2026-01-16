@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Cluster, ClusterMember, ClusterInvite } from '../../types';
+import type { Cluster, ClusterMember, ClusterInvite } from '../../types';
 import { supabase } from '../../lib/supabase';
-import { X, Lock, Unlock, Globe, Trash2, Users, Link as LinkIcon, Activity } from 'lucide-react';
+import { X, Lock, Unlock, Globe, Trash2 } from 'lucide-react';
 
 interface ClusterSettingsModalProps {
   cluster: Cluster;

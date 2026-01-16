@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Loader2, AlertCircle, CheckCircle2, ArrowRight, LogIn } from 'lucide-react';
-import { User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 
 export const InvitePage = () => {
   const { token } = useParams<{ token: string }>();

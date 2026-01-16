@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Cluster, ClusterMember } from '../types';
+import type { Cluster } from '../types';
 
 export interface UserCluster extends Cluster {
   role: 'admin' | 'viewer' | 'editor';

@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { X, Plus, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Check, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PaperType, PinColor } from '../types';
+import type { PinColor, PinContent } from '../types';
 
 interface NewNoticeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: { title: string; content: string; category: string; paperColor: string; pinColor: PinColor }) => void;
+  initialData?: PinContent;
 }
 
 const COLORS = [
@@ -17,11 +18,26 @@ const COLORS = [
   { bg: '#dcfce7', label: 'Green' },
 ];
 
-export const NewNoticeModal: React.FC<NewNoticeModalProps> = ({ isOpen, onClose, onSave }) => {
+export const NewNoticeModal: React.FC<NewNoticeModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('General');
   const [selectedColor, setSelectedColor] = useState('#ffffff');
+
+  useEffect(() => {
+    if (isOpen && initialData) {
+      setTitle(initialData.title || '');
+      setContent(initialData.body || '');
+      setCategory(initialData.category || 'General');
+      setSelectedColor(initialData.paperColor || '#ffffff');
+    } else if (isOpen && !initialData) {
+      // Reset if opening as new
+      setTitle('');
+      setContent('');
+      setCategory('General');
+      setSelectedColor('#ffffff');
+    }
+  }, [isOpen, initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,10 +51,8 @@ export const NewNoticeModal: React.FC<NewNoticeModalProps> = ({ isOpen, onClose,
       pinColor: 'red', // Default pin color
     });
     
-    // Reset
-    setTitle('');
-    setContent('');
-    setCategory('General');
+    // Only reset if we are not editing, but onClose handles unmount usually
+    // or we rely on the useEffect to reset next open
     onClose();
   };
 
@@ -63,7 +77,7 @@ export const NewNoticeModal: React.FC<NewNoticeModalProps> = ({ isOpen, onClose,
             className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100"
           >
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h2 className="text-lg font-semibold text-slate-800">New Note</h2>
+              <h2 className="text-lg font-semibold text-slate-800">{initialData ? 'Edit Note' : 'New Note'}</h2>
               <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-200 transition-colors text-slate-500">
                 <X size={20} />
               </button>
@@ -145,8 +159,8 @@ export const NewNoticeModal: React.FC<NewNoticeModalProps> = ({ isOpen, onClose,
                   disabled={!title || !content}
                   className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-slate-900/20 flex items-center gap-2"
                 >
-                  <Plus size={16} />
-                  Add Note
+                  {initialData ? <Save size={16} /> : <Plus size={16} />}
+                  {initialData ? 'Save Changes' : 'Add Note'}
                 </button>
               </div>
             </form>

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { Pin, PinContent } from '../types';
+import type { Pin, PinContent } from '../types';
 import { useStore } from '../store/useStore';
 
 export const usePins = () => {
@@ -102,11 +102,50 @@ export const usePins = () => {
       if (error) console.error('Error deleting pin:', error);
   };
 
+  const updatePinContent = async (id: string, newContent: PinContent) => {
+      setPins(prev => prev.map(p => p.id === id ? { ...p, content: newContent, updated_at: new Date().toISOString() } : p));
+
+      const { error } = await supabase
+        .from('pins')
+        .update({ 
+            content: newContent,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) console.error('Error updating pin content:', error);
+  };
+
+  const markPinAsRead = async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const pin = pins.find(p => p.id === id);
+      if (!pin) return;
+
+      const currentReadBy = pin.read_by || [];
+      if (currentReadBy.includes(user.id)) return; // Already read
+
+      const newReadBy = [...currentReadBy, user.id];
+      
+      // Optimistic
+      setPins(prev => prev.map(p => p.id === id ? { ...p, read_by: newReadBy } : p));
+
+      const { error } = await supabase
+          .from('pins')
+          .update({ read_by: newReadBy })
+          .eq('id', id);
+          
+      if (error) console.error('Error marking pin as read:', error);
+  };
+
   return {
     pins,
     loading,
     addPin,
     updatePinPosition,
+    updatePinContent,
+    markPinAsRead,
     deletePin
   };
 };

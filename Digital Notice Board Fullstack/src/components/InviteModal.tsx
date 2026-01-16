@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Copy, Check, Share2, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Cluster } from '../types';
+import type { Cluster } from '../types';
 
 interface InviteModalProps {
   cluster: Cluster;

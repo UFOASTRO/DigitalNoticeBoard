@@ -42,6 +42,7 @@ export interface ClusterInvite {
 export interface PinContent {
   title?: string;
   body?: string; // The main text content
+  category?: string; // New: Category label
   paperType?: PaperType;
   paperColor?: string;
   pinColor?: PinColor;
@@ -60,6 +61,8 @@ export interface Pin {
   y: number;
   created_by?: string;
   created_at?: string;
+  updated_at?: string; // New: Track edits
+  read_by?: string[]; // New: Array of user IDs who read this
 }
 
 export interface Connection {
@@ -76,7 +79,32 @@ export interface Message {
   user_id: string;
   pin_id?: string | null; // NULL for general chat
   content: string;
+  image_url?: string; // New: Image attachment
   created_at: string;
+  profiles?: { // Joined profile data
+     full_name?: string;
+     email?: string;
+     avatar_url?: string;
+  }
+}
+
+export interface Coordinates {
+  x: number;
+  y: number;
+}
+
+export interface Notice {
+  id: string;
+  title?: string;
+  content?: string;
+  category?: string;
+  position: Coordinates;
+  rotation: number;
+  paperType: PaperType;
+  paperColor?: string;
+  pinColor: PinColor;
+  createdAt: string;
+  expiryDate?: string;
 }
 
 /**

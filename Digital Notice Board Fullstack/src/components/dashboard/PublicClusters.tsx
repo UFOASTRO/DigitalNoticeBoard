@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Cluster } from '../../types';
-import { Search, Globe, ArrowRight, Lock } from 'lucide-react';
+import type { Cluster } from '../../types';
+import { Search, Globe, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const PublicClusters: React.FC = () => {
@@ -22,7 +22,7 @@ export const PublicClusters: React.FC = () => {
       query = query.ilike('name', `%${searchTerm}%`);
     }
 
-    const { data, error } = await query;
+    const { data } = await query;
     if (data) setClusters(data);
     setLoading(false);
   };

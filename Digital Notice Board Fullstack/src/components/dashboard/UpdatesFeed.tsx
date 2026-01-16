@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecentUpdates } from '../../hooks/useRecentUpdates';
-import { StickyNote, Image as ImageIcon, MessageSquare, Clock } from 'lucide-react';
 
 export const UpdatesFeed: React.FC = () => {
   const { updates, loading } = useRecentUpdates();

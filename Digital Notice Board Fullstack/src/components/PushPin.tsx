@@ -1,5 +1,5 @@
 import React from 'react';
-import { PinColor } from '../types';
+import type { PinColor } from '../types';
 
 interface PushPinProps {
   color?: PinColor;

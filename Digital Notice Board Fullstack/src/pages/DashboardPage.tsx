@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { User } from '@supabase/supabase-js';
-import { useUserClusters, UserCluster } from '../hooks/useUserClusters';
+import type { User } from '@supabase/supabase-js';
+import { useUserClusters, type UserCluster } from '../hooks/useUserClusters';
 import { ClusterCard } from '../components/dashboard/ClusterCard';
 import { UpdatesFeed } from '../components/dashboard/UpdatesFeed';
 import { PublicClusters } from '../components/dashboard/PublicClusters';
 import { ClusterSettingsModal } from '../components/dashboard/ClusterSettingsModal';
-import { Plus, LayoutGrid, Search, LogOut, User as UserIcon, Activity } from 'lucide-react';
+import { Plus, LayoutGrid, LogOut, Globe } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ export const DashboardPage: React.FC = () => {
     e.preventDefault();
     if (!newClusterName.trim() || !user) return;
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('clusters')
       .insert({
         name: newClusterName.trim(),
@@ -86,8 +86,8 @@ export const DashboardPage: React.FC = () => {
             onClick={() => setActiveView('public')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${activeView === 'public' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}
           >
-            <Search className="w-5 h-5" />
-            Find Public Clusters
+            <Globe className="w-5 h-5" />
+             Public Clusters
           </button>
         </nav>
 

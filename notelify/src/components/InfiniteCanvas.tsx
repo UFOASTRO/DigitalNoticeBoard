@@ -27,7 +27,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({ children, cursor
   const lastDist = useRef<number | null>(null); // For pinch zoom
 
   // Constants
-  const MIN_SCALE = 0.8;
+  const MIN_SCALE = 0.4;
   const MAX_SCALE = 5;
 
   const handlePointerDown = (e: React.PointerEvent) => {

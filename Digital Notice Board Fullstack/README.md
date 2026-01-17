@@ -1,73 +1,116 @@
-# React + TypeScript + Vite
+# Digital Notice Board (Notelify)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, real-time collaborative workspace that combines the flexibility of an infinite canvas with the organization of a digital notice board. Built with React, Vite, and Supabase.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 🎨 Infinite Canvas & Collaboration
+- **Infinite Workspace**: Pan and zoom freely across a limitless board.
+- **Real-time Presence**: See live cursors of other users on the board.
+- **Live Updates**: Changes to notes, positions, and connections sync instantly across all clients.
 
-## React Compiler
+### 📝 Smart Sticky Notes (Pins)
+- **Rich Styling**: Choose from multiple paper textures (Plain, Lined, Grid, Dot) and colors.
+- **Categorization**: Tag notes with categories like "Work", "Ideas", "To-Do".
+- **Interactivity**: Drag, rotate, and organize notes spatially.
+- **Read Receipts**: Track who has read specific notes.
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+### 🔗 Visual Organization
+- **Visual Connections**: Draw lines between notes to create mind maps or flows (Shift + Click).
+- **Clusters**: Organize work into separate "Clusters" (Boards).
+- **Privacy Controls**: 
+  - **Public Clusters**: Discoverable by anyone.
+  - **Private/Locked**: Invite-only access.
+- **Role-Based Access**: Granular permissions (Admin, Editor, Viewer).
 
-## Expanding the ESLint configuration
+### 💬 Integrated Communication
+- **Cluster Chat**: Integrated messaging system for each board.
+- **Contextual Discussions**: chat while working on the canvas.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠 Technology Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Frontend**: React 19, TypeScript, Vite
+- **Styling**: Tailwind CSS, Lucide React (Icons)
+- **Animations**: Framer Motion
+- **State Management**: Zustand
+- **Backend**: Supabase (PostgreSQL)
+- **Real-time**: Supabase Realtime (Presence & Broadcast)
+- **Auth**: Supabase Auth
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🏁 Getting Started
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Prerequisites
+- Node.js (v18 or higher)
+- A Supabase project
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/yourusername/digital-notice-board.git
+cd digital-notice-board
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Environment Setup
+Create a `.env` file in the project root with your Supabase credentials:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+### 3. Install Dependencies
+```bash
+npm install
+```
+
+### 4. Run Development Server
+```bash
+npm run dev
+```
+
+## 🗄️ Database Schema
+
+The project uses Supabase (PostgreSQL) with the following core tables:
+
+- **`profiles`**: User data (synced with Auth).
+- **`clusters`**: Board metadata (name, description, visibility).
+- **`cluster_members`**: Links users to clusters with roles (`admin`, `editor`, `viewer`).
+- **`pins`**: The sticky notes. Stores `x`, `y` coordinates, `content` JSON, and styling.
+- **`connections`**: Visual lines connecting two pins (`from_pin`, `to_pin`).
+- **`messages`**: Chat messages within a cluster.
+- **`cluster_invites`**: Temporary invite tokens for joining clusters.
+
+## 📂 Project Structure
+
+```
+src/
+├── components/         # UI Components
+│   ├── dashboard/      # Cluster management UI
+│   ├── FloatingDock.tsx # Main canvas controls
+│   ├── InfiniteCanvas.tsx # Canvas logic & rendering
+│   ├── PaperNote.tsx   # Individual sticky note component
+│   └── ...
+├── hooks/              # Custom React Hooks
+│   ├── usePresence.ts  # Real-time cursor tracking
+│   ├── usePins.ts      # Pin CRUD & Sync
+│   ├── useCluster.ts   # Cluster logic
+│   └── ...
+├── lib/                # Utilities (Supabase client)
+├── pages/              # Route Pages
+│   ├── CanvasPage.tsx  # Main board view
+│   ├── DashboardPage.tsx # User dashboard
+│   └── ...
+├── store/              # Global state (Zustand)
+└── types.ts            # TypeScript definitions
+```
+
+## 🤝 Contributing
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

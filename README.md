@@ -1,5 +1,5 @@
 # Digital Notice Board (Notelify)
-
+![Notelify](./notelify/notelify-hero.png)
 A modern, real-time collaborative workspace that combines the flexibility of an infinite canvas with the organization of a digital notice board. Built with React, Vite, and Supabase.
 
 ## 🚀 Features
@@ -45,8 +45,8 @@ A modern, real-time collaborative workspace that combines the flexibility of an 
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/digital-notice-board.git
-cd digital-notice-board
+git clone https://github.com/UFOASTRO/DigitalNoticeBoard.git
+cd notelify
 ```
 
 ### 2. Environment Setup

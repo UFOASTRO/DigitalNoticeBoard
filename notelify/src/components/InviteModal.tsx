@@ -58,13 +58,13 @@ export const InviteModal = ({ cluster, onClose }: InviteModalProps) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <div className="flex items-center gap-2 font-semibold text-slate-800">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 transition-colors">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 transition-colors">
+          <div className="flex items-center gap-2 font-semibold text-slate-800 dark:text-white">
             <Share2 size={18} />
             Share "{cluster.name}"
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
+          <button onClick={onClose} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 dark:text-slate-400">
             <X size={18} />
           </button>
         </div>
@@ -74,14 +74,14 @@ export const InviteModal = ({ cluster, onClose }: InviteModalProps) => {
             <>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Permission</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Permission</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => setPermission('viewer')}
                       className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
                         permission === 'viewer' 
-                          ? 'bg-slate-900 text-white border-slate-900' 
-                          : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                          ? 'bg-slate-900 dark:bg-indigo-600 text-white border-slate-900 dark:border-indigo-600' 
+                          : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
                       }`}
                     >
                       Viewer
@@ -90,14 +90,14 @@ export const InviteModal = ({ cluster, onClose }: InviteModalProps) => {
                       onClick={() => setPermission('editor')}
                       className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
                         permission === 'editor' 
-                          ? 'bg-slate-900 text-white border-slate-900' 
-                          : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                          ? 'bg-slate-900 dark:bg-indigo-600 text-white border-slate-900 dark:border-indigo-600' 
+                          : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
                       }`}
                     >
                       Editor
                     </button>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
                     {permission === 'viewer' 
                       ? 'Can view and send messages only.' 
                       : 'Full access to create and edit pins.'}
@@ -105,11 +105,11 @@ export const InviteModal = ({ cluster, onClose }: InviteModalProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Expires In</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Expires In</label>
                   <select 
                     value={expiry} 
                     onChange={(e) => setExpiry(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-indigo-500/30 bg-white dark:bg-slate-700 dark:text-white"
                   >
                     <option value="24h">24 Hours</option>
                     <option value="48h">2 Days</option>
@@ -121,40 +121,40 @@ export const InviteModal = ({ cluster, onClose }: InviteModalProps) => {
               <button
                 onClick={handleGenerate}
                 disabled={loading}
-                className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-slate-900 dark:bg-indigo-600 text-white rounded-xl font-medium hover:bg-slate-800 dark:hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : 'Generate Invite Link'}
               </button>
             </>
           ) : (
             <div className="space-y-4">
-              <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
+              <div className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg text-sm flex items-start gap-2 border border-green-100 dark:border-green-800">
                 <Check size={16} className="mt-0.5 shrink-0" />
                 Invite link generated successfully!
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Copy Link</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Copy Link</label>
                 <div className="flex gap-2">
                   <input 
                     type="text" 
                     readOnly 
                     value={generatedLink} 
-                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 select-all"
+                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-600 dark:text-slate-300 select-all"
                   />
                   <button 
                     onClick={handleCopy}
-                    className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
                     title="Copy to clipboard"
                   >
-                    {copied ? <Check size={18} className="text-green-600" /> : <Copy size={18} />}
+                    {copied ? <Check size={18} className="text-green-600 dark:text-green-400" /> : <Copy size={18} />}
                   </button>
                 </div>
               </div>
 
               <button
                 onClick={() => setGeneratedLink(null)}
-                className="w-full py-2 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+                className="w-full py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
               >
                 Generate another link
               </button>

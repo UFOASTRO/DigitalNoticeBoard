@@ -11,6 +11,12 @@
   background-color: #f8fafc;
 }
 
+html.dark {
+  color-scheme: dark;
+  color: #f8fafc;
+  background-color: #0f172a;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -22,6 +28,11 @@ body {
   background-color: #f8fafc;
   background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+html.dark .dot-grid-bg {
+  background-color: #0f172a;
+  background-image: radial-gradient(#334155 1px, transparent 1px);
 }
 
 /* Clean Paper Styles */
@@ -45,12 +56,22 @@ body {
   line-height: 28px;
 }
 
+html.dark .paper-lined {
+  background-image: repeating-linear-gradient(transparent, transparent 27px, #334155 27px, #334155 28px);
+}
+
 /* Minimal Grid Pattern */
 .paper-grid {
   background-image: 
     linear-gradient(#e2e8f0 1px, transparent 1px),
     linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+html.dark .paper-grid {
+  background-image: 
+    linear-gradient(#334155 1px, transparent 1px),
+    linear-gradient(90deg, #334155 1px, transparent 1px);
 }
 
 /* From Uiverse.io by Gautammsharma */ 
@@ -85,6 +106,11 @@ position: absolute;
     #000 60%,
     transparent 100%
   );
+}
+
+html.dark .grid-background {
+  background-image: linear-gradient(to right, #334155 .5px, transparent .5px),
+    linear-gradient(to bottom, #334155 .5px, transparent .5px);
 }
 
 .animation-delay-2000 {

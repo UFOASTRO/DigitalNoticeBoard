@@ -30,6 +30,16 @@ export const AuthPage = () => {
       }
     });
 
+    // Check for errors in URL
+    const errorDescription = searchParams.get('error_description');
+    if (errorDescription) {
+      if (errorDescription.includes('Multiple accounts with the same email address')) {
+        setAuthError('An account with this email already exists. Please sign in using your original method (e.g., Email/Password or Google).');
+      } else {
+        setAuthError(errorDescription);
+      }
+    }
+
     return () => subscription.unsubscribe();
   }, [navigate, searchParams]);
 
@@ -71,7 +81,7 @@ export const AuthPage = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/login`,
         },
       });
       if (error) throw error;

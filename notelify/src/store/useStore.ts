@@ -13,6 +13,11 @@ interface AppState {
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
   setSidebarOpen: (isOpen: boolean) => void;
+
+  // Theme State
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
+  setTheme: (theme: 'light' | 'dark') => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -29,4 +34,15 @@ export const useStore = create<AppState>((set) => ({
   isSidebarOpen: true, // Defaults to open for "General Chat"
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+
+  theme: (localStorage.getItem('theme') as 'light' | 'dark') || 'light',
+  toggleTheme: () => set((state) => {
+    const newTheme = state.theme === 'light' ? 'dark' : 'light';
+    localStorage.setItem('theme', newTheme);
+    return { theme: newTheme };
+  }),
+  setTheme: (theme) => {
+    localStorage.setItem('theme', theme);
+    set({ theme });
+  },
 }));

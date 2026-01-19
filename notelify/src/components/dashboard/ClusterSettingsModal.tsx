@@ -88,83 +88,83 @@ export const ClusterSettingsModal: React.FC<ClusterSettingsModalProps> = ({ clus
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col transition-colors">
         {/* Header */}
-        <div className="p-6 border-b flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Manage Cluster: {cluster.name}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+        <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center">
+          <h2 className="text-2xl font-bold dark:text-white">Manage Cluster: {cluster.name}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full dark:text-slate-400">
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b bg-gray-50">
+        <div className="flex border-b bg-gray-50 dark:bg-slate-900 dark:border-slate-700">
           <button 
             onClick={() => setActiveTab('general')}
-            className={`px-6 py-3 font-medium ${activeTab === 'general' ? 'bg-white border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`px-6 py-3 font-medium transition-colors ${activeTab === 'general' ? 'bg-white dark:bg-slate-800 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'}`}
           >
             General
           </button>
           <button 
             onClick={() => setActiveTab('members')}
-            className={`px-6 py-3 font-medium ${activeTab === 'members' ? 'bg-white border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`px-6 py-3 font-medium transition-colors ${activeTab === 'members' ? 'bg-white dark:bg-slate-800 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'}`}
           >
             Members
           </button>
           <button 
             onClick={() => setActiveTab('invites')}
-            className={`px-6 py-3 font-medium ${activeTab === 'invites' ? 'bg-white border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`px-6 py-3 font-medium transition-colors ${activeTab === 'invites' ? 'bg-white dark:bg-slate-800 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'}`}
           >
             Invites
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-6 overflow-y-auto flex-1 dark:text-slate-200">
           {activeTab === 'general' && (
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cluster Name</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Cluster Name</label>
                 <input 
                   type="text" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full p-2 border dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none dark:bg-slate-700 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Description</label>
                 <textarea 
                   value={description} 
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-24"
+                  className="w-full p-2 border dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-24 dark:bg-slate-700 dark:text-white"
                   placeholder="What is this cluster for?"
                 />
               </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+              <div className="flex items-center justify-between p-4 border dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700/50">
                 <div className="flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-gray-600" />
+                  <Globe className="w-5 h-5 text-gray-600 dark:text-slate-400" />
                   <div>
                     <div className="font-medium">Public Cluster</div>
-                    <div className="text-sm text-gray-500">Allow anyone to find and view this cluster</div>
+                    <div className="text-sm text-gray-500 dark:text-slate-400">Allow anyone to find and view this cluster</div>
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+              <div className="flex items-center justify-between p-4 border dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700/50">
                 <div className="flex items-center gap-3">
-                  {isLocked ? <Lock className="w-5 h-5 text-red-600" /> : <Unlock className="w-5 h-5 text-green-600" />}
+                  {isLocked ? <Lock className="w-5 h-5 text-red-600 dark:text-red-400" /> : <Unlock className="w-5 h-5 text-green-600 dark:text-green-400" />}
                   <div>
                     <div className="font-medium">Lock Cluster</div>
-                    <div className="text-sm text-gray-500">Prevent new members from joining</div>
+                    <div className="text-sm text-gray-500 dark:text-slate-400">Prevent new members from joining</div>
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" checked={isLocked} onChange={(e) => setIsLocked(e.target.checked)} className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
                 </label>
               </div>
               <div className="flex justify-end">
@@ -186,22 +186,22 @@ export const ClusterSettingsModal: React.FC<ClusterSettingsModalProps> = ({ clus
               </div>
               <div className="space-y-2">
                 {members.map((member) => (
-                  <div key={member.user_id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                  <div key={member.user_id} className="flex items-center justify-between p-3 border dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold">
+                      <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold">
                         {member.profile?.email?.[0].toUpperCase() || '?'}
                       </div>
                       <div>
                         <div className="font-medium flex items-center gap-2">
                           {member.profile?.full_name || member.profile?.email}
                           {onlineUsers.has(member.user_id) && (
-                            <span className="flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                            <span className="flex items-center gap-1 text-xs text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full">
                               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                               Live
                             </span>
                           )}
                         </div>
-                        <div className="text-sm text-gray-500 capitalize">{member.role}</div>
+                        <div className="text-sm text-gray-500 dark:text-slate-400 capitalize">{member.role}</div>
                       </div>
                     </div>
                   </div>
@@ -216,17 +216,17 @@ export const ClusterSettingsModal: React.FC<ClusterSettingsModalProps> = ({ clus
                 <h3 className="text-lg font-medium">Active Invites</h3>
               </div>
               <div className="space-y-2">
-                {invites.length === 0 ? <p className="text-gray-500 italic">No active invites.</p> : invites.map(invite => (
-                  <div key={invite.id} className="flex items-center justify-between p-3 border rounded-lg">
+                {invites.length === 0 ? <p className="text-gray-500 dark:text-slate-400 italic">No active invites.</p> : invites.map(invite => (
+                  <div key={invite.id} className="flex items-center justify-between p-3 border dark:border-slate-700 rounded-lg">
                     <div className="overflow-hidden">
-                      <div className="text-sm font-mono bg-gray-100 px-2 py-1 rounded w-fit mb-1">{invite.token}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-sm font-mono bg-gray-100 dark:bg-slate-900 px-2 py-1 rounded w-fit mb-1 dark:text-slate-300">{invite.token}</div>
+                      <div className="text-xs text-gray-500 dark:text-slate-400">
                         Expires: {new Date(invite.expires_at).toLocaleDateString()} | Uses: {invite.uses_count}/{invite.max_uses || '∞'}
                       </div>
                     </div>
                     <button 
                       onClick={() => handleDeleteInvite(invite.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                      className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                       title="Revoke Invite"
                     >
                       <Trash2 className="w-5 h-5" />

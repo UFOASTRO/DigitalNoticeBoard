@@ -49,7 +49,7 @@ export const ClusterLayout = () => {
   }, [resize, stopResizing]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors">
       {/* MAIN CANVAS AREA */}
       <main className="flex-1 relative h-full transition-all duration-300">
          <Outlet /> 
@@ -59,7 +59,7 @@ export const ClusterLayout = () => {
       <aside 
         ref={sidebarRef}
         className={`
-          relative border-l border-slate-200 bg-white shadow-xl z-10 flex flex-col
+          relative border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl z-10 flex flex-col transition-colors
           ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full opacity-0 overflow-hidden'}
         `}
         style={{
@@ -73,7 +73,7 @@ export const ClusterLayout = () => {
           onMouseDown={startResizing}
         >
             {/* Visual Indicator on Hover */}
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-slate-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity mx-auto right-0" />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-slate-300 dark:bg-slate-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity mx-auto right-0" />
         </div>
 
         {/* Prevent interaction with content while resizing to avoid selecting text */}

@@ -52,7 +52,7 @@ export const InvitePage = () => {
   const handleJoin = async () => {
     if (!user) {
       // Redirect to login with return URL
-      navigate(`/?returnTo=/invite/${token}`);
+      navigate(`/login?returnTo=/invite/${token}`);
       return;
     }
 

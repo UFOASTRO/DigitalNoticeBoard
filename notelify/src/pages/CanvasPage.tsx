@@ -159,7 +159,7 @@ export const CanvasPage = () => {
       />
       
       {/* Help Tip - Context Aware */}
-      <div className="fixed bottom-8 right-8 text-xs text-slate-400 bg-white/80 backdrop-blur px-3 py-1 rounded-full shadow-sm border border-slate-100 hidden md:block transition-all">
+      <div className="fixed bottom-8 right-8 text-xs text-slate-400 dark:text-slate-500 bg-white/80 dark:bg-slate-800/80 backdrop-blur px-3 py-1 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 hidden md:block transition-all">
          {isConnectMode ? 'Tap two notes to connect them' : 'Shift + Click two notes to connect them'}
       </div>
 

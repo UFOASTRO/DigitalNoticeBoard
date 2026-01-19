@@ -98,16 +98,16 @@ const MessageList = ({ pinId }: { pinId: string | null }) => {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50">
-        {loading && messages.length === 0 && <p className="text-center text-xs text-slate-400">Loading messages...</p>}
+      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50 dark:bg-slate-900/50 transition-colors">
+        {loading && messages.length === 0 && <p className="text-center text-xs text-slate-400 dark:text-slate-500">Loading messages...</p>}
         
         {messages.length === 0 && !loading && (
              <div className="text-center mt-10 opacity-50">
-                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-400">
+                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-400 dark:text-slate-500">
                     <MessageSquare size={20} />
                 </div>
-                <p className="text-sm text-slate-500 font-medium">No messages yet</p>
-                <p className="text-xs text-slate-400">Start the conversation!</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No messages yet</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Start the conversation!</p>
              </div>
         )}
 
@@ -116,17 +116,17 @@ const MessageList = ({ pinId }: { pinId: string | null }) => {
             return (
                 <div key={msg.id} className={clsx("flex flex-col gap-1 max-w-[85%]", isMe ? "self-end items-end" : "self-start items-start")}>
                     {!isMe && (
-                        <span className="text-[10px] font-bold text-slate-500 ml-1">
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 ml-1">
                             {msg.profiles?.full_name || msg.profiles?.email?.split('@')[0] || 'Unknown'}
                         </span>
                     )}
                     
                     <div 
                         className={clsx(
-                            "p-3 rounded-2xl text-sm shadow-sm border",
+                            "p-3 rounded-2xl text-sm shadow-sm border transition-colors",
                             isMe 
-                                ? "bg-slate-900 text-white border-slate-900 rounded-tr-sm" 
-                                : "bg-white text-slate-700 border-slate-200 rounded-tl-sm"
+                                ? "bg-slate-900 dark:bg-indigo-600 text-white border-slate-900 dark:border-indigo-600 rounded-tr-sm" 
+                                : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 rounded-tl-sm"
                         )}
                     >
                         {msg.image_url && (
@@ -145,7 +145,7 @@ const MessageList = ({ pinId }: { pinId: string | null }) => {
                         {msg.content && <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
                     </div>
                     
-                    <span className="text-[10px] text-slate-300 px-1">
+                    <span className="text-[10px] text-slate-300 dark:text-slate-600 px-1">
                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                 </div>
@@ -154,7 +154,7 @@ const MessageList = ({ pinId }: { pinId: string | null }) => {
         <div ref={scrollRef} />
       </div>
 
-      <div className="p-3 border-t border-slate-100 bg-white">
+      <div className="p-3 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 transition-colors">
         <form onSubmit={handleSend} className="relative flex items-center gap-2">
             <input 
                 type="file" 
@@ -168,7 +168,7 @@ const MessageList = ({ pinId }: { pinId: string | null }) => {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50"
+                className="p-2.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors disabled:opacity-50"
                 title="Upload Image"
             >
                 {isUploading ? <Loader2 size={20} className="animate-spin" /> : <ImageIcon size={20} />}
@@ -179,13 +179,13 @@ const MessageList = ({ pinId }: { pinId: string | null }) => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={pinId ? "Reply to thread..." : "Type a message..."}
-                className="flex-1 pl-4 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all text-sm"
+                className="flex-1 pl-4 pr-12 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-indigo-500/30 focus:border-slate-900 dark:focus:border-indigo-500 transition-all text-sm dark:text-white dark:placeholder-slate-400"
             />
             
             <button 
                 type="submit"
                 disabled={!input.trim() && !isUploading}
-                className="absolute right-2 p-1.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-slate-900/20"
+                className="absolute right-2 p-1.5 bg-slate-900 dark:bg-indigo-600 text-white rounded-lg hover:bg-slate-800 dark:hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-slate-900/20 dark:shadow-indigo-900/20"
             >
                 <Send size={14} />
             </button>
@@ -226,32 +226,32 @@ export const Sidebar = () => {
 
   if (!activePinId) {
     return (
-      <div className="flex flex-col h-full bg-slate-50/50 relative border-l border-slate-200">
-        <div className="h-14 px-4 border-b border-slate-200 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-10">
+      <div className="flex flex-col h-full bg-slate-50/50 dark:bg-slate-900/50 relative border-l border-slate-200 dark:border-slate-700 transition-colors">
+        <div className="h-14 px-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/80 dark:bg-slate-800/80 backdrop-blur-md sticky top-0 z-10 transition-colors">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/dashboard')} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition-colors" title="Back to Dashboard">
+            <button onClick={() => navigate('/dashboard')} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors" title="Back to Dashboard">
                 <LayoutGrid size={18} />
             </button>
-            <div className="h-4 w-[1px] bg-slate-200"></div>
+            <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-600"></div>
             <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-800 truncate max-w-[120px]">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px]">
                     {cluster?.name || 'General Chat'}
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                     {cluster?.is_public ? 'Public Board' : 'Private Board'}
                 </span>
             </div>
           </div>
-          <button onClick={toggleSidebar} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
+          <button onClick={toggleSidebar} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
             <X size={18} />
           </button>
         </div>
         
         {isOwner && (
-            <div className="px-4 py-2 bg-white border-b border-slate-50 flex justify-between items-center gap-2">
+            <div className="px-4 py-2 bg-white dark:bg-slate-800 border-b border-slate-50 dark:border-slate-700 flex justify-between items-center gap-2 transition-colors">
               <button 
                 onClick={() => setShowInviteModal(true)}
-                className="flex-1 text-xs text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 font-medium px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+                className="flex-1 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-1.5 font-medium px-3 py-1.5 bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 rounded-lg transition-colors border border-slate-200 dark:border-slate-600"
               >
                 <Share2 size={12} />
                 Share
@@ -259,7 +259,7 @@ export const Sidebar = () => {
 
               <button 
                 onClick={deleteCluster}
-                className="text-xs text-red-600 hover:text-red-700 flex items-center justify-center gap-1.5 font-medium px-3 py-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center justify-center gap-1.5 font-medium px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
               >
                 <Trash2 size={12} />
               </button>
@@ -276,13 +276,13 @@ export const Sidebar = () => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white relative border-l border-slate-200 shadow-xl">
-      <div className="h-14 px-4 border-b border-slate-100 flex items-center justify-between bg-white z-10">
-        <div className="flex items-center gap-2 text-slate-800 font-medium text-sm overflow-hidden">
-             <MessageSquare size={16} className="text-blue-500 flex-shrink-0"/>
+    <div className="flex flex-col h-full bg-white dark:bg-slate-800 relative border-l border-slate-200 dark:border-slate-700 shadow-xl transition-colors">
+      <div className="h-14 px-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-800 z-10 transition-colors">
+        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-medium text-sm overflow-hidden">
+             <MessageSquare size={16} className="text-blue-500 dark:text-blue-400 flex-shrink-0"/>
              <span className="truncate" title={pinTitle || 'Thread'}>{pinTitle || 'Thread'}</span>
         </div>
-        <button onClick={handleClose} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0">
+        <button onClick={handleClose} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex-shrink-0">
           <X size={18} />
         </button>
       </div>

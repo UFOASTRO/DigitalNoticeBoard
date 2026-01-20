@@ -7,59 +7,42 @@ const StickyNode = ({ data, selected }: NodeProps) => {
   const { pin, onEdit, onMarkRead, currentUserId } = data;
 
   return (
-    <div className={`relative ${selected ? 'ring-2 ring-indigo-500 rounded-xl' : ''}`}>
-      {/* Handles for connecting */}
+    <div className={`relative group ${selected ? 'ring-2 ring-indigo-500 rounded-xl' : ''}`}>
+      {/* Handles for connecting - High Z-Index to stay on top */}
       <Handle
         type="target"
         position={Position.Top}
-        className="w-3 h-3 !bg-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="w-3 h-3 !bg-slate-400 opacity-0 group-hover:opacity-100 transition-opacity z-50"
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        className="w-3 h-3 !bg-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="w-3 h-3 !bg-slate-400 opacity-0 group-hover:opacity-100 transition-opacity z-50"
       />
       
       {/* 
-         We pass a modified version of the pin to PaperNote.
-         The PaperNote component has internal drag logic using framer-motion which we need to disable
-         because ReactFlow handles dragging.
-         
-         However, PaperNote expects onDragEnd. We can pass a dummy or refactor PaperNote.
-         Better approach: Render PaperNote but suppress its drag capabilities if possible.
-         Looking at PaperNote source, it uses <motion.div drag ...>.
-         We might need to create a 'static' version or pass a prop to disable drag.
-         For now, we will assume we can't easily change PaperNote without breaking other things,
-         but we can try to disable drag via props if we add that capability to PaperNote
-         OR we just wrap it in a div that captures events? 
-         Actually, ReactFlow nodes are draggable by default. 
-         If PaperNote has `drag` prop on motion.div, it will conflict.
+         Render PaperNote with drag disabled so React Flow manages position.
+         We REMOVED 'nodrag' so React Flow can capture drag events on the note body.
       */}
-      <div className="nodrag">
-          {/* 
-             We wrap PaperNote in 'nodrag' class so ReactFlow doesn't drag it? 
-             No, we WANT ReactFlow to drag it. 
-             But PaperNote has its own drag. 
-             We should update PaperNote to accept a `disableDrag` prop.
-          */}
+      <div>
           <PaperNote 
             pin={pin} 
             onEdit={onEdit}
             onMarkRead={onMarkRead}
             currentUserId={currentUserId}
-            disableDrag={true} // We will add this prop to PaperNote
+            disableDrag={true} 
           />
       </div>
       
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 !bg-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="w-3 h-3 !bg-slate-400 opacity-0 group-hover:opacity-100 transition-opacity z-50"
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 !bg-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="w-3 h-3 !bg-slate-400 opacity-0 group-hover:opacity-100 transition-opacity z-50"
       />
     </div>
   );

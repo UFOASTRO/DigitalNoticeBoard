@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Connection } from '../types';
 import { useStore } from '../store/useStore';
@@ -49,7 +49,7 @@ export const useConnections = () => {
     };
   }, [currentClusterId]);
 
-  const addConnection = async (fromPin: string, toPin: string) => {
+  const addConnection = useCallback(async (fromPin: string, toPin: string) => {
     if (!currentClusterId) return;
 
     // Check if exists
@@ -66,7 +66,7 @@ export const useConnections = () => {
     });
 
     if (error) console.error('Error adding connection:', error);
-  };
+  }, [currentClusterId, connections]);
 
   return {
     connections,

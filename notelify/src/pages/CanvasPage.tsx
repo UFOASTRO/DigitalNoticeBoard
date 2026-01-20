@@ -5,14 +5,15 @@ import ReactFlow, {
   useNodesState, 
   useEdgesState, 
   ConnectionMode,
-  MarkerType,
   type Connection,
   type Node,
   ReactFlowProvider,
-  BackgroundVariant
+  BackgroundVariant,
+  useReactFlow
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useNavigate } from 'react-router-dom';
+import { MousePointer2 } from 'lucide-react';
 import StickyNode from '../components/canvas/StickyNode';
 import { NewNoticeModal } from '../components/NewNoticeModal';
 import { FloatingDock } from '../components/FloatingDock';
@@ -25,13 +26,46 @@ const nodeTypes = {
   sticky: StickyNode,
 };
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Canvas Error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center h-full w-full bg-red-50 text-red-800 p-8">
+          <div className="max-w-md">
+             <h2 className="text-xl font-bold mb-2">Something went wrong.</h2>
+             <pre className="text-xs bg-red-100 p-4 rounded overflow-auto">
+                {this.state.error?.message}
+             </pre>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const CanvasContent = () => {
     const navigate = useNavigate();
     const { setActivePin } = useStore();
     const { pins, updatePinPosition, addPin, updatePinContent, markPinAsRead } = usePins();
     const { connections, addConnection } = useConnections();
-    const { currentUser } = usePresence(); 
-    
+    const { currentUser, othersCursors, updateMyCursor } = usePresence(); 
+    const { screenToFlowPosition, flowToScreenPosition } = useReactFlow();
+
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPin, setEditingPin] = useState<any | null>(null);
@@ -64,13 +98,8 @@ const CanvasContent = () => {
             id: conn.id,
             source: conn.from_pin,
             target: conn.to_pin,
-            type: 'smoothstep', // Modern orthogonal lines
-            animated: true,
+            type: 'simplebezier',
             style: { stroke: '#64748b', strokeWidth: 2 },
-            markerEnd: {
-                type: MarkerType.ArrowClosed,
-                color: '#64748b',
-            },
         }));
         setEdges(newEdges);
     }, [connections, setEdges]);
@@ -119,8 +148,22 @@ const CanvasContent = () => {
         setActivePin(null);
     };
 
+    const onPointerMove = (e: React.PointerEvent) => {
+        // Wrap in try-catch to prevent crash if ReactFlow not ready
+        try {
+            const { x, y } = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+            updateMyCursor(x, y);
+        } catch (err) {
+            // Ignore init errors
+        }
+    };
+
     return (
-        <div className="w-full h-full bg-slate-50 dark:bg-slate-900 transition-colors">
+        <div 
+            className="absolute inset-0 bg-slate-50 dark:bg-slate-900 transition-colors"
+            style={{ width: '100%', height: '100%' }}
+            onPointerMove={onPointerMove}
+        >
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -135,6 +178,7 @@ const CanvasContent = () => {
                 fitView
                 className="transition-colors"
                 minZoom={0.1}
+                
             >
                 <Background 
                     color="#94a3b8" 
@@ -145,6 +189,40 @@ const CanvasContent = () => {
                 />
                 <Controls className="bg-white dark:bg-slate-800 dark:text-white border-slate-200 dark:border-slate-700" />
             </ReactFlow>
+
+            {/* Cursors Layer */}
+            {othersCursors.map(cursor => {
+                // Wrap in try-catch
+                try {
+                    const pos = flowToScreenPosition({ x: cursor.x, y: cursor.y });
+                    const x = pos.x;
+                    const y = pos.y;
+                    
+                    // Only render if on screen? (Optional optimization)
+                    if (x < -50 || y < -50 || x > window.innerWidth + 50 || y > window.innerHeight + 50) return null;
+
+                    return (
+                        <div
+                            key={cursor.userId}
+                            className="absolute top-0 left-0 z-50 pointer-events-none flex flex-col items-start transition-transform duration-100 will-change-transform"
+                            style={{ transform: `translate(${x}px, ${y}px)` }}
+                        >
+                            <MousePointer2 
+                              size={20} 
+                              fill={cursor.color} 
+                              color={cursor.color}
+                              className="drop-shadow-sm"
+                            />
+                            <span 
+                              className="ml-4 px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm whitespace-nowrap opacity-80"
+                              style={{ backgroundColor: cursor.color }}
+                            >
+                              {cursor.name}
+                            </span>
+                        </div>
+                    );
+                } catch(e) { return null; }
+            })}
 
             <FloatingDock 
                 onAddNote={() => { setEditingPin(null); setIsModalOpen(true); }}
@@ -165,6 +243,8 @@ const CanvasContent = () => {
 
 export const CanvasPage = () => (
     <ReactFlowProvider>
-        <CanvasContent />
+        <ErrorBoundary>
+            <CanvasContent />
+        </ErrorBoundary>
     </ReactFlowProvider>
 );

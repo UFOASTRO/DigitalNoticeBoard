@@ -59,7 +59,7 @@ export const usePins = () => {
     };
   }, [currentClusterId, fetchPins]);
 
-  const addPin = async (pin: Omit<Pin, 'id' | 'created_at' | 'created_by' | 'cluster_id'>) => {
+  const addPin = useCallback(async (pin: Omit<Pin, 'id' | 'created_at' | 'created_by' | 'cluster_id'>) => {
     if (!currentClusterId) return;
     
     const { data: { user } } = await supabase.auth.getUser();
@@ -76,9 +76,9 @@ export const usePins = () => {
     });
 
     if (error) console.error('Error adding pin:', error);
-  };
+  }, [currentClusterId]);
 
-  const updatePinPosition = async (id: string, x: number, y: number) => {
+  const updatePinPosition = useCallback(async (id: string, x: number, y: number) => {
     // Optimistic
     setPins(prev => prev.map(p => p.id === id ? { ...p, x, y } : p));
 
@@ -88,9 +88,9 @@ export const usePins = () => {
       .eq('id', id);
 
     if (error) console.error('Error moving pin:', error);
-  };
+  }, []);
   
-  const deletePin = async (id: string) => {
+  const deletePin = useCallback(async (id: string) => {
       // Optimistic
       setPins(prev => prev.filter(p => p.id !== id));
       
@@ -100,9 +100,9 @@ export const usePins = () => {
         .eq('id', id);
         
       if (error) console.error('Error deleting pin:', error);
-  };
+  }, []);
 
-  const updatePinContent = async (id: string, newContent: PinContent) => {
+  const updatePinContent = useCallback(async (id: string, newContent: PinContent) => {
       setPins(prev => prev.map(p => p.id === id ? { ...p, content: newContent, updated_at: new Date().toISOString() } : p));
 
       const { error } = await supabase
@@ -114,30 +114,53 @@ export const usePins = () => {
         .eq('id', id);
 
       if (error) console.error('Error updating pin content:', error);
-  };
+  }, []);
 
-  const markPinAsRead = async (id: string) => {
+  const markPinAsRead = useCallback(async (id: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const pin = pins.find(p => p.id === id);
-      if (!pin) return;
-
-      const currentReadBy = pin.read_by || [];
-      if (currentReadBy.includes(user.id)) return; // Already read
-
-      const newReadBy = [...currentReadBy, user.id];
+      // We need the latest pins to check if already read. 
+      // Using a functional update to get latest state in setPins is good, 
+      // but we need to check condition first.
+      // To avoid adding 'pins' to dependency array (which would cause re-creation on every pin update),
+      // we can check inside the setPins callback or just proceed optimistically.
+      // However, we need to know IF we should update DB.
+      // Compromise: We fetch single pin or just update blindly with array_append if unique?
+      // Supabase doesn't support 'add to array if unique' easily in one go without potential dupes if we aren't careful,
+      // but 'read_by' is a set effectively.
+      // For now, let's include 'pins' in dependency, OR use a ref for pins.
+      // Using ref is safer for stability.
       
-      // Optimistic
-      setPins(prev => prev.map(p => p.id === id ? { ...p, read_by: newReadBy } : p));
+      setPins(prev => {
+         const pin = prev.find(p => p.id === id);
+         if (!pin) return prev;
+         
+         const currentReadBy = pin.read_by || [];
+         if (currentReadBy.includes(user.id)) return prev;
 
-      const { error } = await supabase
-          .from('pins')
-          .update({ read_by: newReadBy })
-          .eq('id', id);
-          
-      if (error) console.error('Error marking pin as read:', error);
-  };
+         const newReadBy = [...currentReadBy, user.id];
+         
+         // Trigger DB update side-effect here? No, better outside.
+         // But we can't easily return values from inside setPins to outside.
+         
+         // Alternative: Just fire the DB update. If it's already there, no harm (idempotent-ish if we handle it right).
+         // Actually, let's just use 'pins' in dependency for now. 
+         // If this causes loop, we will refactor.
+         return prev.map(p => p.id === id ? { ...p, read_by: newReadBy } : p);
+      });
+
+      // DB Update
+      // We do this blindly to avoid 'pins' dependency in the callback
+      const { data: currentPin } = await supabase.from('pins').select('read_by').eq('id', id).single();
+      if (currentPin) {
+          const currentReadBy = (currentPin.read_by as string[]) || [];
+          if (!currentReadBy.includes(user.id)) {
+               const newReadBy = [...currentReadBy, user.id];
+               await supabase.from('pins').update({ read_by: newReadBy }).eq('id', id);
+          }
+      }
+  }, []);
 
   return {
     pins,

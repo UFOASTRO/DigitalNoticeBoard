@@ -18,6 +18,7 @@ export interface Cluster {
   description?: string;
   is_public?: boolean;
   is_locked?: boolean;
+  updated_at?: string;
 }
 
 export interface ClusterMember {

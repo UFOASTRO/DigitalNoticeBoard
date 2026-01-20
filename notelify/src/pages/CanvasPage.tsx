@@ -6,8 +6,8 @@ import ReactFlow, {
   useEdgesState, 
   ConnectionMode,
   MarkerType,
-  Connection,
-  Node,
+  type Connection,
+  type Node,
   ReactFlowProvider,
   BackgroundVariant
 } from 'reactflow';

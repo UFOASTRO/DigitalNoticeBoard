@@ -35,7 +35,7 @@ const getColorForUser = (userId: string) => {
 export const usePresence = () => {
   const { currentClusterId } = useStore();
   const [othersCursors, setOthersCursors] = useState<Cursor[]>([]);
-  const [currentUser, setCurrentUser] = useState<{ id: string; email: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string; color: string } | null>(null);
   
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const cursorsRef = useRef<Map<string, Cursor>>(new Map());
@@ -47,9 +47,12 @@ export const usePresence = () => {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
+        const email = data.user.email || 'Anonymous';
         setCurrentUser({
           id: data.user.id,
-          email: data.user.email || 'Anonymous'
+          email: email,
+          name: email.split('@')[0],
+          color: getColorForUser(data.user.id)
         });
       }
     });

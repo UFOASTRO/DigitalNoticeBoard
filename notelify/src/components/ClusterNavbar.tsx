@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Share2, Settings, ArrowLeft } from 'lucide-react';
 import { useCluster } from '../hooks/useCluster';

@@ -1,5 +1,5 @@
-import React, { memo } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { memo } from 'react';
+import { Handle, Position, type NodeProps } from 'reactflow';
 import { PaperNote } from '../PaperNote';
 
 const StickyNode = ({ data, selected }: NodeProps) => {

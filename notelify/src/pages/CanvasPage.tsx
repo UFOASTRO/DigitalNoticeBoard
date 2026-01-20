@@ -1,7 +1,19 @@
-import { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import ReactFlow, { 
+  Background, 
+  Controls, 
+  useNodesState, 
+  useEdgesState, 
+  ConnectionMode,
+  MarkerType,
+  Connection,
+  Node,
+  ReactFlowProvider,
+  BackgroundVariant
+} from 'reactflow';
+import 'reactflow/dist/style.css';
 import { useNavigate } from 'react-router-dom';
-import { InfiniteCanvas } from '../components/InfiniteCanvas';
-import { PaperNote } from '../components/PaperNote';
+import StickyNode from '../components/canvas/StickyNode';
 import { NewNoticeModal } from '../components/NewNoticeModal';
 import { FloatingDock } from '../components/FloatingDock';
 import { usePins } from '../hooks/usePins';
@@ -9,166 +21,150 @@ import { useConnections } from '../hooks/useConnections';
 import { useStore } from '../store/useStore';
 import { usePresence } from '../hooks/usePresence';
 
-export const CanvasPage = () => {
-  const navigate = useNavigate();
-  const { setActivePin } = useStore();
-  const { pins, updatePinPosition, addPin, updatePinContent, markPinAsRead, loading } = usePins();
-  const { connections, addConnection } = useConnections();
-  const { othersCursors, updateMyCursor, currentUser } = usePresence();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPin, setEditingPin] = useState<any | null>(null);
-  
-  // Connection linking state
-  const [connectingPinId, setConnectingPinId] = useState<string | null>(null);
-  const [isConnectMode, setIsConnectMode] = useState(false);
+const nodeTypes = {
+  sticky: StickyNode,
+};
 
-  const handleSaveNotice = (data: any) => {
-    const pinContent = {
-      title: data.title,
-      body: data.content,
-      category: data.category,
-      paperType: 'plain' as const,
-      paperColor: data.paperColor,
-      pinColor: data.pinColor,
+const CanvasContent = () => {
+    const navigate = useNavigate();
+    const { setActivePin } = useStore();
+    const { pins, updatePinPosition, addPin, updatePinContent, markPinAsRead } = usePins();
+    const { connections, addConnection } = useConnections();
+    const { currentUser } = usePresence(); 
+    
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingPin, setEditingPin] = useState<any | null>(null);
+
+    // React Flow State
+    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+    // Sync Pins -> Nodes
+    useEffect(() => {
+        // Transform pins to React Flow nodes
+        const newNodes = pins.map(pin => ({
+            id: pin.id,
+            type: 'sticky',
+            position: { x: pin.x, y: pin.y },
+            data: { 
+                pin, 
+                onEdit: (p: any) => { setEditingPin(p); setIsModalOpen(true); },
+                onMarkRead: markPinAsRead,
+                currentUserId: currentUser?.id
+            },
+            // We can add dragHandle class to specific parts if needed, but StickyNode wraps PaperNote
+        }));
+        setNodes(newNodes);
+    }, [pins, currentUser, markPinAsRead, setNodes]); 
+
+    // Sync Connections -> Edges
+    useEffect(() => {
+        const newEdges = connections.map(conn => ({
+            id: conn.id,
+            source: conn.from_pin,
+            target: conn.to_pin,
+            type: 'smoothstep', // Modern orthogonal lines
+            animated: true,
+            style: { stroke: '#64748b', strokeWidth: 2 },
+            markerEnd: {
+                type: MarkerType.ArrowClosed,
+                color: '#64748b',
+            },
+        }));
+        setEdges(newEdges);
+    }, [connections, setEdges]);
+
+    const handleNodeDragStop = useCallback((_event: any, node: Node) => {
+        // Only update if position actually changed significantly to reduce writes
+        updatePinPosition(node.id, node.position.x, node.position.y);
+    }, [updatePinPosition]);
+
+    const onConnect = useCallback((params: Connection) => {
+        if (params.source && params.target) {
+            addConnection(params.source, params.target);
+        }
+    }, [addConnection]);
+
+    const handleSaveNotice = (data: any) => {
+        const pinContent = {
+            title: data.title,
+            body: data.content,
+            category: data.category,
+            paperType: 'plain' as const,
+            paperColor: data.paperColor,
+            pinColor: data.pinColor,
+        };
+    
+        if (editingPin) {
+            updatePinContent(editingPin.id, pinContent);
+            setEditingPin(null);
+        } else {
+            // Calculate center of screen or random position?
+            // For now, centerish (React Flow coordinates start at 0,0 usually)
+            addPin({
+              type: 'sticky',
+              content: pinContent,
+              x: Math.random() * 200 + 100,
+              y: Math.random() * 200 + 100
+            });
+        }
     };
 
-    if (editingPin) {
-        updatePinContent(editingPin.id, pinContent);
-        setEditingPin(null);
-    } else {
-        addPin({
-          type: 'sticky',
-          content: pinContent,
-          x: window.innerWidth / 2 - 150,
-          y: window.innerHeight / 2 - 100
-        });
-    }
-  };
+    const handleNodeClick = (_: React.MouseEvent, node: Node) => {
+        setActivePin(node.id);
+    };
 
-  const handleEditPin = (pin: any) => {
-     setEditingPin(pin);
-     setIsModalOpen(true);
-  };
+    const handlePaneClick = () => {
+        setActivePin(null);
+    };
 
-  const handleModalClose = () => {
-      setIsModalOpen(false);
-      setEditingPin(null);
-  };
+    return (
+        <div className="w-full h-full bg-slate-50 dark:bg-slate-900 transition-colors">
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodeDragStop={handleNodeDragStop}
+                onNodeClick={handleNodeClick}
+                onPaneClick={handlePaneClick}
+                nodeTypes={nodeTypes}
+                connectionMode={ConnectionMode.Loose}
+                fitView
+                className="transition-colors"
+                minZoom={0.1}
+            >
+                <Background 
+                    color="#94a3b8" 
+                    gap={24} 
+                    size={2} 
+                    variant={BackgroundVariant.Dots} 
+                    className="opacity-50"
+                />
+                <Controls className="bg-white dark:bg-slate-800 dark:text-white border-slate-200 dark:border-slate-700" />
+            </ReactFlow>
 
-  const handlePinClick = (pinId: string, e: React.MouseEvent) => {
-    // If holding Shift OR in connect mode, try to connect
-    if (e.shiftKey || isConnectMode) {
-       e.stopPropagation();
-       if (connectingPinId === null) {
-          setConnectingPinId(pinId);
-       } else {
-          if (connectingPinId !== pinId) {
-             addConnection(connectingPinId, pinId);
-          }
-          setConnectingPinId(null);
-          // If in connect mode, maybe we want to keep selecting? 
-          // For now let's reset connectingId but keep mode.
-       }
-       return;
-    }
-
-    setActivePin(pinId);
-    setConnectingPinId(null);
-  };
-
-  // Helper to find pin coordinates
-  const getPinCenter = (id: string) => {
-     const pin = pins.find(p => p.id === id);
-     if (!pin) return { x: 0, y: 0 };
-     // Assuming pin width ~288px (w-72) and height variable but let's aim for center top or center
-     // PaperNote is w-72 (288px). Let's offset by half width.
-     return { x: pin.x + 144, y: pin.y + 100 };
-  };
-
-  return (
-    <div className="w-full h-full relative" onClick={() => setConnectingPinId(null)}>
-      <InfiniteCanvas 
-        cursors={othersCursors} 
-        onCursorMove={updateMyCursor}
-      >
-        {/* Connections Layer (Below Pins) */}
-        <svg className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-visible z-0">
-           {connections.map(conn => {
-              const start = getPinCenter(conn.from_pin);
-              const end = getPinCenter(conn.to_pin);
-              const dx = end.x - start.x;
-              // Create a smooth S-curve
-              const pathData = `M ${start.x} ${start.y} C ${start.x + dx * 0.5} ${start.y}, ${end.x - dx * 0.5} ${end.y}, ${end.x} ${end.y}`;
-
-              return (
-                 <path 
-                   key={conn.id}
-                   d={pathData}
-                   fill="none"
-                   stroke="#94a3b8"
-                   strokeWidth="3"
-                   strokeLinecap="round"
-                   className="opacity-60 hover:opacity-100 transition-opacity duration-200"
-                 />
-              );
-           })}
-           {/* Temporary line while connecting */}
-           {connectingPinId && (
-               // This would require mouse tracking to draw line to cursor. 
-               // For MVP, we just highlight the selected pin.
-               <></>
-           )}
-        </svg>
-
-        {pins.map(pin => (
-          <div 
-            key={pin.id} 
-            onClick={(e) => {
-                e.stopPropagation();
-                handlePinClick(pin.id, e);
-            }}
-            className={`${connectingPinId === pin.id ? 'ring-4 ring-blue-500 rounded-xl' : ''} transition-all duration-200 pointer-events-auto`}
-          >
-            <PaperNote 
-              pin={pin} 
-              onDragEnd={updatePinPosition}
-              onEdit={handleEditPin}
-              onMarkRead={markPinAsRead}
-              currentUserId={currentUser?.id}
+            <FloatingDock 
+                onAddNote={() => { setEditingPin(null); setIsModalOpen(true); }}
+                isConnectMode={false} // Handled by React Flow handles
+                onToggleConnect={() => {}} 
+                onDashboard={() => navigate('/dashboard')}
             />
-          </div>
-        ))}
-        {loading && pins.length === 0 && (
-           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-             <span className="bg-white/80 px-4 py-2 rounded-full shadow-sm text-sm text-slate-500 backdrop-blur">
-               Loading Board...
-             </span>
-           </div>
-        )}
-      </InfiniteCanvas>
-
-      {/* Floating Menu Dock */}
-      <FloatingDock 
-        onAddNote={() => { setEditingPin(null); setIsModalOpen(true); }}
-        isConnectMode={isConnectMode}
-        onToggleConnect={() => {
-           setIsConnectMode(!isConnectMode);
-           setConnectingPinId(null); // Reset pending connection when toggling
-        }}
-        onDashboard={() => navigate('/dashboard')}
-      />
-      
-      {/* Help Tip - Context Aware */}
-      <div className="fixed bottom-8 right-8 text-xs text-slate-400 dark:text-slate-500 bg-white/80 dark:bg-slate-800/80 backdrop-blur px-3 py-1 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 hidden md:block transition-all">
-         {isConnectMode ? 'Tap two notes to connect them' : 'Shift + Click two notes to connect them'}
-      </div>
-
-      <NewNoticeModal 
-        isOpen={isModalOpen} 
-        onClose={handleModalClose}
-        onSave={handleSaveNotice}
-        initialData={editingPin?.content}
-      />
-    </div>
-  );
+            
+            <NewNoticeModal 
+                isOpen={isModalOpen} 
+                onClose={() => { setIsModalOpen(false); setEditingPin(null); }}
+                onSave={handleSaveNotice}
+                initialData={editingPin?.content}
+            />
+        </div>
+    );
 };
+
+export const CanvasPage = () => (
+    <ReactFlowProvider>
+        <CanvasContent />
+    </ReactFlowProvider>
+);

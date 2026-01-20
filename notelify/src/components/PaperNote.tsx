@@ -10,9 +10,10 @@ interface PaperNoteProps {
   onEdit?: (pin: Pin) => void;
   onMarkRead?: (id: string) => void;
   currentUserId?: string;
+  disableDrag?: boolean;
 }
 
-export const PaperNote: React.FC<PaperNoteProps> = ({ pin, onDragEnd, onEdit, onMarkRead, currentUserId }) => {
+export const PaperNote: React.FC<PaperNoteProps> = ({ pin, onDragEnd, onEdit, onMarkRead, currentUserId, disableDrag = false }) => {
   const { 
     id, 
     content, 
@@ -56,25 +57,30 @@ export const PaperNote: React.FC<PaperNoteProps> = ({ pin, onDragEnd, onEdit, on
     window.open(`${baseUrl}&${params.toString()}`, '_blank');
   };
 
-  return (
-    <motion.div
-      drag
-      dragMomentum={false}
-      // Stop propagation to prevent panning the canvas while dragging a note
-      onPointerDown={(e) => e.stopPropagation()} 
-      initial={{ x, y }}
-      animate={{ x, y }}
-      whileHover={{ scale: 1.01, zIndex: 10, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
-      whileDrag={{ scale: 1.02, zIndex: 50, cursor: 'grabbing', boxShadow: "0 25px 50px -12px rgb(0 0 0 / 0.25)" }}
-      onDragEnd={(_, info) => {
+  const dragProps = disableDrag ? {} : {
+    drag: true,
+    dragMomentum: false,
+    onDragEnd: (_: any, info: any) => {
         if (onDragEnd) {
           onDragEnd(id, x + info.offset.x, y + info.offset.y);
         }
-      }}
+    }
+  };
+
+  return (
+    <motion.div
+      {...dragProps}
+      // Stop propagation to prevent panning the canvas while dragging a note
+      onPointerDown={(e) => !disableDrag && e.stopPropagation()} 
+      initial={disableDrag ? undefined : { x, y }}
+      animate={disableDrag ? undefined : { x, y }}
+      whileHover={{ scale: 1.01, zIndex: 10, boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)" }}
+      whileDrag={disableDrag ? undefined : { scale: 1.02, zIndex: 50, cursor: 'grabbing', boxShadow: "0 25px 50px -12px rgb(0 0 0 / 0.25)" }}
       className={clsx(
-        "absolute w-72 min-h-[12rem] p-6 flex flex-col rounded-xl border border-slate-200 paper-shadow cursor-grab transition-colors group",
-        "text-slate-800",
-        textureClass
+        "relative w-72 min-h-[12rem] p-6 flex flex-col rounded-xl border border-slate-200 dark:border-slate-700 paper-shadow cursor-grab transition-colors group",
+        "text-slate-800 dark:text-slate-200",
+        textureClass,
+        disableDrag ? "h-full" : "absolute"
       )}
       style={{ 
         backgroundColor: paperColor && paperColor !== '#FDFBF7' ? paperColor : undefined 

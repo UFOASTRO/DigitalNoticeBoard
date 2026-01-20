@@ -4,6 +4,7 @@ import { ChevronDown, Share2, Settings, ArrowLeft } from 'lucide-react';
 import { useCluster } from '../hooks/useCluster';
 import { useUserClusters } from '../hooks/useUserClusters';
 import { usePresence } from '../hooks/usePresence';
+// import { useCall } from '../context/CallContext';
 import { InviteModal } from './InviteModal';
 import { ClusterSettingsModal } from './dashboard/ClusterSettingsModal';
 
@@ -114,6 +115,16 @@ export const ClusterNavbar = () => {
             </div>
 
             <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+
+            {/* Call Button
+            <button 
+                onClick={() => !isActive && startCall(cluster.id)}
+                disabled={isActive}
+                className={`flex items-center justify-center p-2 rounded-full transition-all shadow-md active:scale-95 ${isActive ? 'bg-green-100 text-green-600 cursor-default' : 'bg-green-600 text-white hover:bg-green-700'}`}
+                title={isActive ? "Call Active" : "Start Call"}
+            >
+                <Phone size={20} />
+            </button> */}
 
             {/* Share CTA */}
             <button 

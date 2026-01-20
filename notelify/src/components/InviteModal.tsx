@@ -18,7 +18,7 @@ export const InviteModal = ({ cluster, onClose }: InviteModalProps) => {
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      let expiresAt = new Date();
+      const expiresAt = new Date();
       switch (expiry) {
         case '24h': expiresAt.setHours(expiresAt.getHours() + 24); break;
         case '48h': expiresAt.setHours(expiresAt.getHours() + 48); break;
@@ -41,8 +41,9 @@ export const InviteModal = ({ cluster, onClose }: InviteModalProps) => {
 
       const link = `${window.location.origin}/invite/${data.token}`;
       setGeneratedLink(link);
-    } catch (err: any) {
-      alert('Error generating invite: ' + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error occurred';
+      alert('Error generating invite: ' + message);
     } finally {
       setLoading(false);
     }

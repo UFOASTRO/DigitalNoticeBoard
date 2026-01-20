@@ -21,6 +21,7 @@ import { usePins } from '../hooks/usePins';
 import { useConnections } from '../hooks/useConnections';
 import { useStore } from '../store/useStore';
 import { usePresence } from '../hooks/usePresence';
+import { useCall } from '../context/CallContext';
 
 const nodeTypes = {
   sticky: StickyNode,
@@ -60,7 +61,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 
 const CanvasContent = () => {
     const navigate = useNavigate();
-    const { setActivePin } = useStore();
+    const { setActivePin, currentClusterId } = useStore();
+    const { startCall } = useCall();
     const { pins, updatePinPosition, addPin, updatePinContent, markPinAsRead } = usePins();
     const { connections, addConnection } = useConnections();
     const { currentUser, othersCursors, updateMyCursor } = usePresence(); 
@@ -229,6 +231,7 @@ const CanvasContent = () => {
                 isConnectMode={false} // Handled by React Flow handles
                 onToggleConnect={() => {}} 
                 onDashboard={() => navigate('/dashboard')}
+                onStartCall={() => currentClusterId && startCall(currentClusterId)}
             />
             
             <NewNoticeModal 

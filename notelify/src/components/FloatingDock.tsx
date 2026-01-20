@@ -6,7 +6,8 @@ import {
   Link, 
   LayoutGrid, 
   MousePointer2, 
-  ChevronUp 
+  ChevronUp,
+  Video
 } from 'lucide-react';
 
 interface FloatingDockProps {
@@ -14,13 +15,15 @@ interface FloatingDockProps {
   isConnectMode: boolean;
   onToggleConnect: () => void;
   onDashboard: () => void;
+  onStartCall: () => void;
 }
 
 export const FloatingDock: React.FC<FloatingDockProps> = ({ 
   onAddNote, 
   isConnectMode, 
   onToggleConnect,
-  onDashboard
+  onDashboard,
+  onStartCall
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -51,6 +54,13 @@ export const FloatingDock: React.FC<FloatingDockProps> = ({
       label: 'Add Note',
       icon: StickyNote,
       action: onAddNote,
+      active: false
+    },
+    {
+      id: 'video',
+      label: 'Video Call',
+      icon: Video,
+      action: onStartCall,
       active: false
     },
   ];

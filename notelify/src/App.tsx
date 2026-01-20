@@ -7,6 +7,8 @@ import { LandingPage } from './pages/LandingPage';
 import { InvitePage } from './pages/InvitePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { useStore } from './store/useStore';
+import VideoDock from './components/VideoDock';
+import { CallToast } from './components/CallToast';
 
 function App() {
   const { theme } = useStore();
@@ -20,15 +22,19 @@ function App() {
   }, [theme]);
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<AuthPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/invite/:token" element={<InvitePage />} />
-      <Route path="/app/:clusterId" element={<ClusterLayout />}>
-        <Route index element={<CanvasPage />} />
-      </Route>
-    </Routes>
+    <>
+      <VideoDock />
+      <CallToast />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/invite/:token" element={<InvitePage />} />
+        <Route path="/app/:clusterId" element={<ClusterLayout />}>
+          <Route index element={<CanvasPage />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
 

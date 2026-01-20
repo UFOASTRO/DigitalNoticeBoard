@@ -3,6 +3,7 @@ import { useParams, Outlet } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { Sidebar } from '../components/Sidebar';
 import { ClusterNavbar } from '../components/ClusterNavbar';
+import { ActiveCallIndicator } from '../components/ActiveCallIndicator';
 
 export const ClusterLayout = () => {
   const { clusterId } = useParams<{ clusterId: string }>();
@@ -55,6 +56,9 @@ export const ClusterLayout = () => {
       <ClusterNavbar />
 
       <div className="flex flex-1 overflow-hidden relative">
+        {/* Call Indicator Overlay */}
+        {clusterId && <ActiveCallIndicator clusterId={clusterId} />}
+
         {/* MAIN CANVAS AREA */}
         <main className="flex-1 relative h-full transition-all duration-300">
            <Outlet /> 

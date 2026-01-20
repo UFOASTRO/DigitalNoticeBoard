@@ -18,6 +18,11 @@ interface AppState {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
+
+  // Video Call State
+  isCallActive: boolean;
+  startCall: () => void;
+  endCall: () => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -45,4 +50,8 @@ export const useStore = create<AppState>((set) => ({
     localStorage.setItem('theme', theme);
     set({ theme });
   },
+
+  isCallActive: false,
+  startCall: () => set({ isCallActive: true }),
+  endCall: () => set({ isCallActive: false }),
 }));

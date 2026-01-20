@@ -250,11 +250,12 @@ const VideoDock = () => {
         drag
         dragControls={dragControls}
         dragMomentum={false}
+        dragElastic={0}
         dragConstraints={constraintsRef}
         initial={{ x: window.innerWidth - 620, y: 20, opacity: 0 }}
         animate={{ opacity: 1 }}
         className={cnLocal(
-          "pointer-events-auto absolute bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl overflow-hidden transition-all duration-300",
+          "pointer-events-auto absolute bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl overflow-hidden transition-[width,height] duration-300",
           isExpanded ? "w-[600px] h-[450px]" : "w-auto h-auto"
         )}
       >

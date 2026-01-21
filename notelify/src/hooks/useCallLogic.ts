@@ -366,11 +366,12 @@ export const useCallLogic = () => {
             isHostRef.current = true; // I am the host
             
             // Also add self to participants
-            await supabase.from('call_participants').insert({
+            await supabase.from('call_participants').upsert({
                 call_id: data.id,
                 user_id: user.id,
-                status: 'connected'
-            });
+                status: 'connected',
+                joined_at: new Date().toISOString()
+            }, { onConflict: 'call_id,user_id' });
 
             startHeartbeat(data.id);
             await initializePeer(stream, clusterId);
@@ -398,11 +399,12 @@ export const useCallLogic = () => {
             isHostRef.current = false; // I am a guest
 
             // Add to participants
-            const { error } = await supabase.from('call_participants').insert({
+            const { error } = await supabase.from('call_participants').upsert({
                 call_id: callId,
                 user_id: user.id,
-                status: 'connected'
-            });
+                status: 'connected',
+                joined_at: new Date().toISOString()
+            }, { onConflict: 'call_id,user_id' });
             
             if (error) console.error("Error joining participant table:", error);
 

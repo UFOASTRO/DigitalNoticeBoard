@@ -120,12 +120,19 @@ export const useCallLogic = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Initialize PeerJS
+        // Initialize PeerJS with STUN servers for better connectivity
         const peer = new Peer(undefined as any, {
-            // debug: 2
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
+                ]
+            }
         });
 
         peer.on('open', (myPeerId) => {
+            console.log("My Peer ID:", myPeerId);
             peerRef.current = peer;
             joinSignalingChannel(clusterId, myPeerId, user);
         });
@@ -138,7 +145,6 @@ export const useCallLogic = () => {
 
         peer.on('error', (err) => {
             console.error("PeerJS Error:", err);
-            // Handle critical errors if needed
             if (err.type === 'peer-unavailable') {
                 // Peer disconnected
             }
@@ -155,18 +161,16 @@ export const useCallLogic = () => {
                 handlePresenceSync(state, myPeerId);
             })
             .on('presence', { event: 'join' }, ({ newPresences }) => {
-                // When someone joins, we do NOT call them immediately to avoid race conditions.
-                // We rely on the newcomer (who receives 'sync') to call us.
-                // However, we still need to update our peers list metadata if they connect.
-                
-                // Exception: If we are the 'host' or older peer, maybe we should be polite?
-                // PeerJS convention: One side calls.
-                // Strategy: "Newcomer calls existing".
-                // So here in 'join', we just update metadata, we don't initiate call.
-                
-                newPresences.forEach(() => {
-                     // Check if we already have a call with them (maybe they called us fast)
-                     // Just update metadata if needed.
+                // When a new user joins, if I am the "older" (lexicographically larger ID) peer, I call them.
+                newPresences.forEach((p: any) => {
+                     if (p.peerId !== myPeerId && !callsRef.current.has(p.peerId)) {
+                         if (myPeerId > p.peerId) {
+                             console.log(`[Join] I (${myPeerId}) am calling new peer (${p.peerId})`);
+                             connectToPeer(p.peerId);
+                         } else {
+                             console.log(`[Join] I (${myPeerId}) am waiting for call from (${p.peerId})`);
+                         }
+                     }
                 });
             })
             .on('presence', { event: 'leave' }, ({ leftPresences }) => {
@@ -196,31 +200,33 @@ export const useCallLogic = () => {
         // 1. Update existing peers metadata
         setPeers(prev => {
             const newPeers = [...prev];
+            let changed = false;
+            
             allPresences.forEach(p => {
                 if (p.peerId === myPeerId) return;
                 
                 const existingIdx = newPeers.findIndex(peer => peer.peerId === p.peerId);
                 if (existingIdx >= 0) {
-                    newPeers[existingIdx] = {
-                        ...newPeers[existingIdx],
-                        user: p.user,
-                        isMuted: !p.mic,
-                        isVideoOff: !p.camera
-                    };
+                    const current = newPeers[existingIdx];
+                    if (current.isMuted !== !p.mic || current.isVideoOff !== !p.camera) {
+                        newPeers[existingIdx] = {
+                            ...current,
+                            user: p.user,
+                            isMuted: !p.mic,
+                            isVideoOff: !p.camera
+                        };
+                        changed = true;
+                    }
                 }
             });
-            return newPeers;
+            return changed ? newPeers : prev;
         });
 
         // 2. Connect to peers we don't have a call with yet
-        // Deterministic Connection Logic:
-        // To avoid race conditions (double calling), we compare Peer IDs.
-        // The peer with the "larger" ID calls the peer with the "smaller" ID.
-        // If my ID > their ID, I call them.
-        // If my ID < their ID, I wait for them to call me.
         allPresences.forEach(p => {
             if (p.peerId !== myPeerId && !callsRef.current.has(p.peerId)) {
                 if (myPeerId > p.peerId) {
+                    console.log(`[Sync] I (${myPeerId}) am calling peer (${p.peerId})`);
                     connectToPeer(p.peerId);
                 }
             }
@@ -318,12 +324,26 @@ export const useCallLogic = () => {
     const startCall = async (clusterId: string) => {
         try {
             setError(null);
+            
+            // 1. Check for existing active call first to prevent duplicates
+            const { data: existingCall } = await supabase
+                .from('calls')
+                .select('id')
+                .eq('cluster_id', clusterId)
+                .eq('status', 'active')
+                .maybeSingle();
+
+            if (existingCall) {
+                console.log("Found existing active call, joining instead of creating...");
+                return joinCall(clusterId, existingCall.id);
+            }
+
             const stream = await initializeMedia();
             
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Authentication required");
 
-            // Create Call Entry
+            // 2. Create Call Entry
             const { data, error } = await supabase
                 .from('calls')
                 .insert({

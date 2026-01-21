@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useDragControls } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useCall } from '../context/CallContext';
+// import { usePresence } from '../hooks/usePresence';
 import type { CallParticipant } from '../hooks/useCallLogic';
 import { 
   Mic, MicOff, Video, VideoOff, PhoneOff, 
@@ -80,6 +81,7 @@ const VideoDock = () => {
           link.media = styleSheet.media.mediaText;
           link.href = styleSheet.href || "";
           pipWin.document.head.appendChild(link);
+          console.error(e);
         }
       });
       

@@ -295,22 +295,27 @@ export const useCallLogic = () => {
         
         // Define the ping function
         const ping = async () => {
-             const { data: { user } } = await supabase.auth.getUser();
-             if (!user) return;
+             try {
+                 const { data: { user }, error: authError } = await supabase.auth.getUser();
+                 if (authError || !user) return;
 
-             if (isHostRef.current) {
-                 // Host updates the main call row
-                 await supabase
-                    .from('calls')
-                    .update({ updated_at: new Date().toISOString() })
-                    .eq('id', callId);
-             } else {
-                 // Participants update their own row in call_participants
-                 await supabase
-                    .from('call_participants')
-                    .update({ last_ping: new Date().toISOString() })
-                    .eq('call_id', callId)
-                    .eq('user_id', user.id);
+                 if (isHostRef.current) {
+                     // Host updates the main call row
+                     await supabase
+                        .from('calls')
+                        .update({ updated_at: new Date().toISOString() })
+                        .eq('id', callId);
+                 } else {
+                     // Participants update their own row in call_participants
+                     await supabase
+                        .from('call_participants')
+                        .update({ last_ping: new Date().toISOString() })
+                        .eq('call_id', callId)
+                        .eq('user_id', user.id);
+                 }
+             } catch (err) {
+                 // Suppress network errors during heartbeat to avoid console spam/crash
+                 console.warn("Heartbeat ping failed:", err);
              }
         };
 

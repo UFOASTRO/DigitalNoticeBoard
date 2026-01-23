@@ -20,7 +20,11 @@ export const usePins = () => {
     if (error) {
       console.error('Error fetching pins:', error);
     } else if (data) {
-      setPins(data as Pin[]);
+      setPins((data as any[]).map(p => ({
+        ...p,
+        x: p.x ?? 0,
+        y: p.y ?? 0
+      })) as Pin[]);
     }
     setLoading(false);
   }, [currentClusterId]);

@@ -5,7 +5,7 @@ import { PaperNote } from '../PaperNote';
 const StickyNode = ({ data, selected }: NodeProps) => {
   // data contains the pin object and other props we passed
   const { pin, onEdit, onMarkRead, currentUserId } = data;
-
+ 
   if (!pin) return null;
 
   return (

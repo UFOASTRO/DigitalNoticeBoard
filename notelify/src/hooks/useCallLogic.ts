@@ -300,14 +300,29 @@ export const useCallLogic = () => {
     };
 
     const addPeer = (peerId: string, stream: MediaStream) => {
+        // Try to get user info from presence
+        let userInfo = { id: '?', name: 'Connecting...', color: '#999' };
+        let isMuted = false;
+        let isVideoOff = false;
+        if (channelRef.current) {
+            const state = channelRef.current.presenceState();
+            const allPresences = Object.values(state).flat();
+            const found = allPresences.find((p: any) => p.peerId === peerId);
+            if (found) {
+                userInfo = found.user || userInfo;
+                isMuted = !found.mic;
+                isVideoOff = !found.camera;
+            }
+        }
+        console.log(`[WebRTC] Setting remote stream for peer ${peerId}`, userInfo);
         setPeers(prev => {
             if (prev.some(p => p.peerId === peerId)) return prev;
             return [...prev, {
                 peerId,
                 stream,
-                user: { id: '?', name: 'Connecting...', color: '#999' }, 
-                isMuted: false,
-                isVideoOff: false
+                user: userInfo,
+                isMuted,
+                isVideoOff
             }];
         });
     };

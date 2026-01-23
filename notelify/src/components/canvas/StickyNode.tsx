@@ -6,8 +6,10 @@ const StickyNode = ({ data, selected }: NodeProps) => {
   // data contains the pin object and other props we passed
   const { pin, onEdit, onMarkRead, currentUserId } = data;
 
+  if (!pin) return null;
+
   return (
-    <div className={`relative group ${selected ? 'ring-2 ring-indigo-500 rounded-xl' : ''}`}>
+    <div className={`relative group w-72 h-auto ${selected ? 'ring-2 ring-indigo-500 rounded-xl' : ''}`}>
       {/* Handles for connecting - High Z-Index to stay on top */}
       <Handle
         type="target"

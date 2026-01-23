@@ -44,6 +44,7 @@ export const useCallLogic = () => {
     const heartbeatIntervalRef = useRef<any>(null);
     const ringingSubscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
     const isHostRef = useRef<boolean>(false);
+    const failedPeersRef = useRef<Set<string>>(new Set());
 
     // ----------------------------------------------------------------
     // 1. Ringing Mechanism (Global Listener)
@@ -118,7 +119,10 @@ export const useCallLogic = () => {
     // ----------------------------------------------------------------
     const initializePeer = useCallback(async (stream: MediaStream, clusterId: string) => {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+            console.error("[WebRTC] No user found during peer initialization");
+            return;
+        }
 
         // Initialize PeerJS with STUN servers for better connectivity
         const peer = new Peer(undefined as any, {
@@ -132,21 +136,33 @@ export const useCallLogic = () => {
         });
 
         peer.on('open', (myPeerId) => {
-            console.log("My Peer ID:", myPeerId);
+            if (!myPeerId) {
+                console.error('[WebRTC] PeerJS did not provide a peerId!');
+                return;
+            }
+            console.log(`[WebRTC] My Peer ID: ${myPeerId}, User ID: ${user.id}`);
             peerRef.current = peer;
             joinSignalingChannel(clusterId, myPeerId, user);
         });
 
         peer.on('call', (call) => {
-            console.log("Incoming WebRTC call from:", call.peer);
+            console.log(`[WebRTC] Incoming WebRTC call from: ${call.peer}`);
             call.answer(streamRef.current || stream);
             setupCallEvents(call);
         });
 
         peer.on('error', (err) => {
-            console.error("PeerJS Error:", err);
+            console.error("[WebRTC] PeerJS Error:", err);
             if (err.type === 'peer-unavailable') {
-                // Peer disconnected
+                // Extract peerId from error message if possible
+                // PeerJS error message: "Could not connect to peer <id>"
+                const matches = err.message.match(/Could not connect to peer (\S+)/);
+                if (matches && matches[1]) {
+                     const deadPeerId = matches[1];
+                     console.warn(`[WebRTC] Peer ${deadPeerId} is unavailable. Stopping connection attempts.`);
+                     failedPeersRef.current.add(deadPeerId);
+                     removePeer(deadPeerId);
+                }
             }
         });
     }, []);
@@ -158,6 +174,7 @@ export const useCallLogic = () => {
         channel
             .on('presence', { event: 'sync' }, () => {
                 const state = channel.presenceState();
+                console.log(`[WebRTC] Presence sync for peerId ${myPeerId}. State:`, state);
                 handlePresenceSync(state, myPeerId);
             })
             .on('presence', { event: 'join' }, ({ newPresences }) => {
@@ -165,21 +182,23 @@ export const useCallLogic = () => {
                 newPresences.forEach((p: any) => {
                      if (p.peerId !== myPeerId && !callsRef.current.has(p.peerId)) {
                          if (myPeerId > p.peerId) {
-                             console.log(`[Join] I (${myPeerId}) am calling new peer (${p.peerId})`);
+                             console.log(`[WebRTC] [Join] I (${myPeerId}) am calling new peer (${p.peerId})`);
                              connectToPeer(p.peerId);
                          } else {
-                             console.log(`[Join] I (${myPeerId}) am waiting for call from (${p.peerId})`);
+                             console.log(`[WebRTC] [Join] I (${myPeerId}) am waiting for call from (${p.peerId})`);
                          }
                      }
                 });
             })
             .on('presence', { event: 'leave' }, ({ leftPresences }) => {
                 leftPresences.forEach((p: any) => {
+                    console.log(`[WebRTC] Peer left: ${p.peerId}`);
                     removePeer(p.peerId);
                 });
             })
             .subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
+                    console.log(`[WebRTC] Channel subscribed. Tracking presence for peerId ${myPeerId}`);
                     await channel.track({
                         peerId: myPeerId,
                         user: {
@@ -204,7 +223,6 @@ export const useCallLogic = () => {
             
             allPresences.forEach(p => {
                 if (p.peerId === myPeerId) return;
-                
                 const existingIdx = newPeers.findIndex(peer => peer.peerId === p.peerId);
                 if (existingIdx >= 0) {
                     const current = newPeers[existingIdx];
@@ -226,27 +244,44 @@ export const useCallLogic = () => {
         allPresences.forEach(p => {
             if (p.peerId !== myPeerId && !callsRef.current.has(p.peerId)) {
                 if (myPeerId > p.peerId) {
-                    console.log(`[Sync] I (${myPeerId}) am calling peer (${p.peerId})`);
+                    console.log(`[WebRTC] [Sync] I (${myPeerId}) am calling peer (${p.peerId})`);
                     connectToPeer(p.peerId);
+                } else {
+                    console.log(`[WebRTC] [Sync] I (${myPeerId}) am waiting for call from (${p.peerId})`);
                 }
             }
         });
     };
 
     const connectToPeer = (remotePeerId: string) => {
-        if (!peerRef.current || callsRef.current.has(remotePeerId)) return;
+        if (!peerRef.current) {
+            console.warn(`[WebRTC] connectToPeer: No peerRef.current for remotePeerId ${remotePeerId}`);
+            return;
+        }
+        if (callsRef.current.has(remotePeerId)) {
+            console.log(`[WebRTC] connectToPeer: Already connected to ${remotePeerId}`);
+            return;
+        }
+        if (failedPeersRef.current.has(remotePeerId)) {
+            console.warn(`[WebRTC] connectToPeer: ${remotePeerId} is in failedPeersRef`);
+            return;
+        }
         const currentStream = streamRef.current;
         if (!currentStream) {
-            console.warn("No local stream available to call peer:", remotePeerId);
+            console.warn(`[WebRTC] No local stream available to call peer: ${remotePeerId}`);
             return;
         }
 
-        console.log("Initiating call to:", remotePeerId);
+        console.log(`[WebRTC] Initiating call to: ${remotePeerId}`);
         try {
             const call = peerRef.current.call(remotePeerId, currentStream);
+            if (!call) {
+                console.warn(`[WebRTC] Call to ${remotePeerId} failed to initiate (returned null/undefined)`);
+                return;
+            }
             setupCallEvents(call);
         } catch (e) {
-            console.error("Failed to call peer:", e);
+            console.error(`[WebRTC] Failed to call peer ${remotePeerId}:`, e);
         }
     };
 
@@ -487,6 +522,7 @@ export const useCallLogic = () => {
         channelRef.current = null;
         currentCallIdRef.current = null;
         isHostRef.current = false;
+        failedPeersRef.current.clear();
     }, [setStoreCallInactive]);
 
     const endCall = () => {

@@ -45,6 +45,7 @@ export const useCallLogic = () => {
     const ringingSubscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
     const isHostRef = useRef<boolean>(false);
     const failedPeersRef = useRef<Set<string>>(new Set());
+    const peerMetadataRef = useRef<Map<string, any>>(new Map()); // Cache for user info
 
     // ----------------------------------------------------------------
     // 1. Ringing Mechanism (Global Listener)
@@ -126,12 +127,16 @@ export const useCallLogic = () => {
 
         // Initialize PeerJS with STUN servers for better connectivity
         const peer = new Peer(undefined as any, {
+            debug: 1, // Log errors
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
                     { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' }
-                ]
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' }
+                ],
+                iceCandidatePoolSize: 10
             }
         });
 
@@ -147,15 +152,18 @@ export const useCallLogic = () => {
 
         peer.on('call', (call) => {
             console.log(`[WebRTC] Incoming WebRTC call from: ${call.peer}`);
-            call.answer(streamRef.current || stream);
-            setupCallEvents(call);
+            const currentStream = streamRef.current;
+            if (currentStream) {
+                call.answer(currentStream);
+                setupCallEvents(call);
+            } else {
+                console.error("[WebRTC] Cannot answer call: Local stream is missing!");
+            }
         });
 
         peer.on('error', (err) => {
             console.error("[WebRTC] PeerJS Error:", err);
             if (err.type === 'peer-unavailable') {
-                // Extract peerId from error message if possible
-                // PeerJS error message: "Could not connect to peer <id>"
                 const matches = err.message.match(/Could not connect to peer (\S+)/);
                 if (matches && matches[1]) {
                      const deadPeerId = matches[1];
@@ -178,16 +186,24 @@ export const useCallLogic = () => {
                 handlePresenceSync(state, myPeerId);
             })
             .on('presence', { event: 'join' }, ({ newPresences }) => {
-                // When a new user joins, if I am the "older" (lexicographically larger ID) peer, I call them.
                 newPresences.forEach((p: any) => {
-                     if (p.peerId !== myPeerId && !callsRef.current.has(p.peerId)) {
+                    // Update metadata cache immediately
+                    if (p.peerId && p.user) {
+                        peerMetadataRef.current.set(p.peerId, {
+                            user: p.user,
+                            mic: p.mic,
+                            camera: p.camera
+                        });
+                    }
+
+                    if (p.peerId !== myPeerId && !callsRef.current.has(p.peerId)) {
                          if (myPeerId > p.peerId) {
                              console.log(`[WebRTC] [Join] I (${myPeerId}) am calling new peer (${p.peerId})`);
                              connectToPeer(p.peerId);
                          } else {
                              console.log(`[WebRTC] [Join] I (${myPeerId}) am waiting for call from (${p.peerId})`);
                          }
-                     }
+                    }
                 });
             })
             .on('presence', { event: 'leave' }, ({ leftPresences }) => {
@@ -216,17 +232,26 @@ export const useCallLogic = () => {
     const handlePresenceSync = (state: any, myPeerId: string) => {
         const allPresences = Object.values(state).flat() as any[];
         
-        // 1. Update existing peers metadata
+        // 1. Update metadata cache & existing peers
         setPeers(prev => {
             const newPeers = [...prev];
             let changed = false;
             
             allPresences.forEach(p => {
+                // Update Cache
+                peerMetadataRef.current.set(p.peerId, {
+                    user: p.user,
+                    mic: p.mic,
+                    camera: p.camera
+                });
+
                 if (p.peerId === myPeerId) return;
+
                 const existingIdx = newPeers.findIndex(peer => peer.peerId === p.peerId);
                 if (existingIdx >= 0) {
                     const current = newPeers[existingIdx];
-                    if (current.isMuted !== !p.mic || current.isVideoOff !== !p.camera) {
+                    // Update if metadata changed
+                    if (current.isMuted !== !p.mic || current.isVideoOff !== !p.camera || current.user.name !== p.user.name) {
                         newPeers[existingIdx] = {
                             ...current,
                             user: p.user,
@@ -246,8 +271,6 @@ export const useCallLogic = () => {
                 if (myPeerId > p.peerId) {
                     console.log(`[WebRTC] [Sync] I (${myPeerId}) am calling peer (${p.peerId})`);
                     connectToPeer(p.peerId);
-                } else {
-                    console.log(`[WebRTC] [Sync] I (${myPeerId}) am waiting for call from (${p.peerId})`);
                 }
             }
         });
@@ -259,12 +282,10 @@ export const useCallLogic = () => {
             return;
         }
         if (callsRef.current.has(remotePeerId)) {
-            console.log(`[WebRTC] connectToPeer: Already connected to ${remotePeerId}`);
-            return;
+            return; // Already connected
         }
         if (failedPeersRef.current.has(remotePeerId)) {
-            console.warn(`[WebRTC] connectToPeer: ${remotePeerId} is in failedPeersRef`);
-            return;
+            return; // Failed previously
         }
         const currentStream = streamRef.current;
         if (!currentStream) {
@@ -287,6 +308,7 @@ export const useCallLogic = () => {
 
     const setupCallEvents = (call: any) => {
         call.on('stream', (remoteStream: MediaStream) => {
+            console.log(`[WebRTC] Received stream from ${call.peer}`, remoteStream.getTracks());
             addPeer(call.peer, remoteStream);
         });
         call.on('close', () => {
@@ -300,11 +322,20 @@ export const useCallLogic = () => {
     };
 
     const addPeer = (peerId: string, stream: MediaStream) => {
-        // Try to get user info from presence
+        // Try to get user info from cache or presence
         let userInfo = { id: '?', name: 'Connecting...', color: '#999' };
         let isMuted = false;
         let isVideoOff = false;
-        if (channelRef.current) {
+
+        // Check cache first
+        if (peerMetadataRef.current.has(peerId)) {
+            const meta = peerMetadataRef.current.get(peerId);
+            userInfo = meta.user || userInfo;
+            isMuted = !meta.mic;
+            isVideoOff = !meta.camera;
+        } 
+        // Fallback to current presence state
+        else if (channelRef.current) {
             const state = channelRef.current.presenceState();
             const allPresences = Object.values(state).flat();
             const found = allPresences.find((p: any) => p.peerId === peerId);
@@ -312,9 +343,17 @@ export const useCallLogic = () => {
                 userInfo = found.user || userInfo;
                 isMuted = !found.mic;
                 isVideoOff = !found.camera;
+                // Update cache
+                peerMetadataRef.current.set(peerId, {
+                     user: found.user,
+                     mic: found.mic,
+                     camera: found.camera
+                });
             }
         }
-        console.log(`[WebRTC] Setting remote stream for peer ${peerId}`, userInfo);
+
+        console.log(`[WebRTC] Adding peer ${peerId} with name: ${userInfo.name}`);
+        
         setPeers(prev => {
             if (prev.some(p => p.peerId === peerId)) return prev;
             return [...prev, {
